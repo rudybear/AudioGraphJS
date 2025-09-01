@@ -11,14 +11,15 @@ export interface OscillatorParams {
 
 export function createOscillator(
   context: BaseAudioContext,
-  spec: GraphNodeSpec
+  spec: GraphNodeSpec,
+  trace?: { log: (s: string) => void }
 ): OscillatorNode {
   const node = context.createOscillator();
   const p = (spec.params || {}) as Partial<OscillatorParams>;
 
-  if (p.type) node.type = p.type as OscillatorType;
-  if (typeof p.frequency === 'number') node.frequency.setValueAtTime(p.frequency, context.currentTime);
-  if (typeof p.detune === 'number') node.detune.setValueAtTime(p.detune, context.currentTime);
+  if (p.type) { node.type = p.type as OscillatorType; trace?.log?.(`Oscillator[${spec.id}].type=${p.type}`); }
+  if (typeof p.frequency === 'number') { node.frequency.setValueAtTime(p.frequency, context.currentTime); trace?.log?.(`Oscillator[${spec.id}].frequency.setValueAtTime(${p.frequency}, ${context.currentTime})`); }
+  if (typeof p.detune === 'number') { node.detune.setValueAtTime(p.detune, context.currentTime); trace?.log?.(`Oscillator[${spec.id}].detune.setValueAtTime(${p.detune}, ${context.currentTime})`); }
 
   // Static PWM for square using PeriodicWave
   if (p.type === 'square' && typeof p.pulseWidth === 'number') {
@@ -26,6 +27,7 @@ export function createOscillator(
     const wave = createPulsePeriodicWave(context, duty, 64);
     try {
       node.setPeriodicWave(wave);
+      trace?.log?.(`Oscillator[${spec.id}].setPeriodicWave(pulseWidth=${duty})`);
     } catch (_) {
       // ignore if backend doesn't support PeriodicWave
     }
@@ -34,12 +36,14 @@ export function createOscillator(
   const when = context.currentTime + Math.max(0, p.startTime ?? 0);
   try {
     node.start(when);
+    trace?.log?.(`Oscillator[${spec.id}].start(${when})`);
   } catch (_) {
     // ignore double starts
   }
   if (typeof p.stopTime === 'number') {
     try {
       node.stop(p.stopTime);
+      trace?.log?.(`Oscillator[${spec.id}].stop(${p.stopTime})`);
     } catch (_) {
       // ignore if already stopped
     }

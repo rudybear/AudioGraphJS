@@ -12,33 +12,46 @@ import { createChannelMerger } from '../nodes/channelMerger.js';
 import { createChannelMixer } from '../nodes/channelMixer.js';
 import { createAudioMixer } from '../nodes/audioMixer.js';
 import { createEmitterChain } from '../nodes/emitter.js';
+import type { TraceLogger } from './trace.js';
 
-function buildNode(context: BaseAudioContext, spec: GraphNodeSpec): AudioNode {
+function buildNode(context: BaseAudioContext, spec: GraphNodeSpec, trace?: TraceLogger): AudioNode {
   switch (spec.kind) {
     case 'audio-buffer-source':
-      return createAudioBufferSource(context, spec);
+      trace?.log(`createBufferSource id=${spec.id}`);
+      return createAudioBufferSource(context, spec, trace);
     case 'gain':
-      return createGain(context, spec);
+      trace?.log(`createGain id=${spec.id}`);
+      return createGain(context, spec, trace);
     case 'oscillator':
-      return createOscillator(context, spec);
+      trace?.log(`createOscillator id=${spec.id}`);
+      return createOscillator(context, spec, trace);
     case 'biquad-filter':
-      return createBiquadFilter(context, spec);
+      trace?.log(`createBiquadFilter id=${spec.id}`);
+      return createBiquadFilter(context, spec, trace);
     case 'delay':
-      return createDelay(context, spec);
+      trace?.log(`createDelay id=${spec.id}`);
+      return createDelay(context, spec, trace);
     case 'convolver':
-      return createConvolver(context, spec);
+      trace?.log(`createConvolver id=${spec.id}`);
+      return createConvolver(context, spec, trace);
     case 'stereo-panner':
-      return createStereoPanner(context, spec);
+      trace?.log(`createStereoPanner id=${spec.id}`);
+      return createStereoPanner(context, spec, trace);
     case 'panner':
-      return createPanner(context, spec);
+      trace?.log(`createPanner id=${spec.id}`);
+      return createPanner(context, spec, trace);
     case 'channel-splitter':
-      return createChannelSplitter(context, spec);
+      trace?.log(`createChannelSplitter id=${spec.id}`);
+      return createChannelSplitter(context, spec, trace);
     case 'channel-merger':
-      return createChannelMerger(context, spec);
+      trace?.log(`createChannelMerger id=${spec.id}`);
+      return createChannelMerger(context, spec, trace);
     case 'channel-mixer':
-      return createChannelMixer(context, spec);
+      trace?.log(`createChannelMixer id=${spec.id}`);
+      return createChannelMixer(context, spec, trace);
     case 'audio-mixer':
-      return createAudioMixer(context, spec);
+      trace?.log(`createAudioMixer id=${spec.id}`);
+      return createAudioMixer(context, spec, trace);
     default:
       throw new Error(`Unsupported node kind: ${spec.kind}`);
   }
@@ -46,16 +59,18 @@ function buildNode(context: BaseAudioContext, spec: GraphNodeSpec): AudioNode {
 
 export function buildGraph(
   context: BaseAudioContext,
-  spec: GraphSpec
+  spec: GraphSpec,
+  trace?: TraceLogger
 ): BuiltGraph {
   const nodes = new Map<string, AudioNode>();
   for (const n of spec.nodes) {
     if (n.kind === 'emitter') {
       const chain = createEmitterChain(context, n);
       nodes.set(n.id, chain.input);
+      trace?.log(`createEmitter id=${n.id} -> connect(emitter.output, destination)`);
       chain.output.connect((context as any).destination);
     } else {
-      const node = buildNode(context, n);
+      const node = buildNode(context, n, trace);
       nodes.set(n.id, node);
     }
   }
@@ -66,6 +81,9 @@ export function buildGraph(
     // Basic port handling: default to main output/input; allow numeric indices
     const outIndex = typeof c.from.output === 'number' ? c.from.output : undefined;
     const inIndex = typeof c.to.input === 'number' ? c.to.input : undefined;
+    trace?.log(
+      `connect ${c.from.node}${outIndex !== undefined ? `[out ${outIndex}]` : ''} -> ${c.to.node}${inIndex !== undefined ? `[in ${inIndex}]` : ''}`
+    );
     if (outIndex !== undefined && inIndex !== undefined) from.connect(to, outIndex, inIndex);
     else if (outIndex !== undefined) from.connect(to, outIndex);
     else from.connect(to);

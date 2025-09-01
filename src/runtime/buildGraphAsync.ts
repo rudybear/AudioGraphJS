@@ -12,37 +12,54 @@ import { createChannelMerger } from '../nodes/channelMerger.js';
 import { createChannelMixer } from '../nodes/channelMixer.js';
 import { createAudioMixer } from '../nodes/audioMixer.js';
 import { createEmitterChain } from '../nodes/emitter.js';
+import type { TraceLogger } from './trace.js';
 
-async function buildNodeAsync(context: BaseAudioContext, spec: GraphNodeSpec): Promise<AudioNode> {
+async function buildNodeAsync(context: BaseAudioContext, spec: GraphNodeSpec, trace?: TraceLogger): Promise<AudioNode> {
   if (spec.kind === 'audio-buffer-source' && spec.params && 'uri' in spec.params!) {
-    return await createAudioBufferSourceAsync(context, spec);
+    trace?.log(`createBufferSource id=${spec.id} (uri)`);
+    return await createAudioBufferSourceAsync(context, spec, trace);
   }
   switch (spec.kind) {
     case 'audio-buffer-source':
-      return createAudioBufferSource(context, spec);
+      trace?.log(`createBufferSource id=${spec.id}`);
+      return createAudioBufferSource(context, spec, trace);
     case 'gain':
-      return createGain(context, spec);
+      trace?.log(`createGain id=${spec.id}`);
+      return createGain(context, spec, trace);
     case 'oscillator':
-      return createOscillator(context, spec);
+      trace?.log(`createOscillator id=${spec.id}`);
+      return createOscillator(context, spec, trace);
     case 'biquad-filter':
-      return createBiquadFilter(context, spec);
+      trace?.log(`createBiquadFilter id=${spec.id}`);
+      return createBiquadFilter(context, spec, trace);
     case 'delay':
-      return createDelay(context, spec);
+      trace?.log(`createDelay id=${spec.id}`);
+      return createDelay(context, spec, trace);
     case 'convolver':
-      if (spec.params && 'uri' in spec.params!) return await createConvolverAsync(context, spec);
-      return createConvolver(context, spec);
+      if (spec.params && 'uri' in spec.params!) {
+        trace?.log(`createConvolver id=${spec.id} (uri)`);
+        return await createConvolverAsync(context, spec, trace);
+      }
+      trace?.log(`createConvolver id=${spec.id}`);
+      return createConvolver(context, spec, trace);
     case 'stereo-panner':
-      return createStereoPanner(context, spec);
+      trace?.log(`createStereoPanner id=${spec.id}`);
+      return createStereoPanner(context, spec, trace);
     case 'panner':
-      return createPanner(context, spec);
+      trace?.log(`createPanner id=${spec.id}`);
+      return createPanner(context, spec, trace);
     case 'channel-splitter':
-      return createChannelSplitter(context, spec);
+      trace?.log(`createChannelSplitter id=${spec.id}`);
+      return createChannelSplitter(context, spec, trace);
     case 'channel-merger':
-      return createChannelMerger(context, spec);
+      trace?.log(`createChannelMerger id=${spec.id}`);
+      return createChannelMerger(context, spec, trace);
     case 'channel-mixer':
-      return createChannelMixer(context, spec);
+      trace?.log(`createChannelMixer id=${spec.id}`);
+      return createChannelMixer(context, spec, trace);
     case 'audio-mixer':
-      return createAudioMixer(context, spec);
+      trace?.log(`createAudioMixer id=${spec.id}`);
+      return createAudioMixer(context, spec, trace);
     default:
       throw new Error(`Unsupported node kind: ${spec.kind}`);
   }
@@ -50,16 +67,18 @@ async function buildNodeAsync(context: BaseAudioContext, spec: GraphNodeSpec): P
 
 export async function buildGraphAsync(
   context: BaseAudioContext,
-  spec: GraphSpec
+  spec: GraphSpec,
+  trace?: TraceLogger
 ): Promise<BuiltGraph> {
   const nodes = new Map<string, AudioNode>();
   for (const n of spec.nodes) {
     if (n.kind === 'emitter') {
       const chain = createEmitterChain(context, n);
       nodes.set(n.id, chain.input);
+      trace?.log(`createEmitter id=${n.id} -> connect(emitter.output, destination)`);
       chain.output.connect((context as any).destination);
     } else {
-      const node = await buildNodeAsync(context, n);
+      const node = await buildNodeAsync(context, n, trace);
       nodes.set(n.id, node);
     }
   }
@@ -69,6 +88,9 @@ export async function buildGraphAsync(
     if (!from || !to) throw new Error(`Invalid connection: ${c.from.node} -> ${c.to.node}`);
     const outIndex = typeof c.from.output === 'number' ? c.from.output : undefined;
     const inIndex = typeof c.to.input === 'number' ? c.to.input : undefined;
+    trace?.log(
+      `connect ${c.from.node}${outIndex !== undefined ? `[out ${outIndex}]` : ''} -> ${c.to.node}${inIndex !== undefined ? `[in ${inIndex}]` : ''}`
+    );
     if (outIndex !== undefined && inIndex !== undefined) from.connect(to, outIndex, inIndex);
     else if (outIndex !== undefined) from.connect(to, outIndex);
     else from.connect(to);

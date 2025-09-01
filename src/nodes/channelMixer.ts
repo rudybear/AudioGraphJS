@@ -7,7 +7,8 @@ export interface ChannelMixerParams {
 
 export function createChannelMixer(
   context: BaseAudioContext,
-  spec: GraphNodeSpec
+  spec: GraphNodeSpec,
+  trace?: { log: (s: string) => void }
 ): GainNode {
   // Implements mixing via Web Audio channel mixing rules by configuring input node properties.
   const node = context.createGain();
@@ -16,6 +17,7 @@ export function createChannelMixer(
     try {
       (node as any).channelCountMode = 'explicit';
       (node as any).channelCount = p.outputChannels;
+      trace?.log?.(`ChannelMixer[${spec.id}].channelCount=${p.outputChannels}`);
     } catch {
       // ignore if backend does not support
     }
@@ -23,8 +25,8 @@ export function createChannelMixer(
   if (p.channelInterpretation) {
     try {
       (node as any).channelInterpretation = p.channelInterpretation;
+      trace?.log?.(`ChannelMixer[${spec.id}].channelInterpretation=${p.channelInterpretation}`);
     } catch {}
   }
   return node;
 }
-

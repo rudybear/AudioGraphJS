@@ -1,0 +1,38 @@
+createBufferSource id=srcA (uri)
+AudioBufferSource[srcA].start(0)
+AudioBufferSource[srcA].buffer <- uri(data:audio/wav;base64,UklGRiTuAgBXQVZFZm10IBAAAAABAAEAgLsAAAB3AQ…)
+createOscillator id=srcB
+Oscillator[srcB].type=square
+Oscillator[srcB].frequency.setValueAtTime(440, 0)
+Oscillator[srcB].setPeriodicWave(pulseWidth=0.3)
+Oscillator[srcB].start(0)
+createAudioMixer id=mix
+createGain id=postGain
+Gain[postGain].gain.setValueAtTime(0.6, 0)
+createBiquadFilter id=lp
+Biquad[lp].type=lowpass
+Biquad[lp].frequency.setValueAtTime(3000, 0)
+Biquad[lp].Q.setValueAtTime(0.707, 0)
+createDelay id=delay
+Delay[delay].delayTime.setValueAtTime(0.12, 0)
+createConvolver id=conv (uri)
+Convolver[conv].normalize=true
+Convolver[conv].buffer <- uri(data:audio/wav;base64,UklGRiSWAABXQVZFZm10IBAAAAABAAEAgLsAAAB3AQ…)
+createGain id=dry
+Gain[dry].gain.setValueAtTime(0.7, 0)
+createGain id=wet
+Gain[wet].gain.setValueAtTime(0.3, 0)
+createStereoPanner id=pan
+StereoPanner[pan].pan.setValueAtTime(-0.2, 0)
+createEmitter id=emit -> connect(emitter.output, destination)
+connect srcA -> mix
+connect srcB -> mix
+connect mix -> postGain
+connect postGain -> lp
+connect lp -> delay
+connect delay -> dry
+connect delay -> conv
+connect conv -> wet
+connect dry -> pan
+connect wet -> pan
+connect pan -> emit

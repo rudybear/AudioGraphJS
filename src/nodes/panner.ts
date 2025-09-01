@@ -15,13 +15,14 @@ export interface PannerParams {
 
 export function createPanner(
   context: BaseAudioContext,
-  spec: GraphNodeSpec
+  spec: GraphNodeSpec,
+  trace?: { log: (s: string) => void }
 ): PannerNode {
   const node = context.createPanner();
   const p = (spec.params || {}) as Partial<PannerParams>;
 
-  if (p.panningModel) node.panningModel = p.panningModel;
-  if (p.distanceModel) node.distanceModel = p.distanceModel as any;
+  if (p.panningModel) { node.panningModel = p.panningModel; trace?.log?.(`Panner[${spec.id}].panningModel=${p.panningModel}`); }
+  if (p.distanceModel) { node.distanceModel = p.distanceModel as any; trace?.log?.(`Panner[${spec.id}].distanceModel=${p.distanceModel}`); }
   if (typeof p.refDistance === 'number') node.refDistance = p.refDistance;
   if (typeof p.maxDistance === 'number') node.maxDistance = p.maxDistance;
   if (typeof p.rolloffFactor === 'number') node.rolloffFactor = p.rolloffFactor;

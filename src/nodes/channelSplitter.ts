@@ -6,7 +6,8 @@ export interface ChannelSplitterParams {
 
 export function createChannelSplitter(
   context: BaseAudioContext,
-  spec: GraphNodeSpec
+  spec: GraphNodeSpec,
+  _trace?: { log: (s: string) => void }
 ): ChannelSplitterNode {
   const p = (spec.params || {}) as Partial<ChannelSplitterParams>;
   const count = typeof p.numberOfOutputs === 'number' ? p.numberOfOutputs : undefined;
@@ -14,4 +15,3 @@ export function createChannelSplitter(
   const node = context.createChannelSplitter(count ?? 6); // defaulting to 6 to cover 5.1; engine will clamp
   return node;
 }
-

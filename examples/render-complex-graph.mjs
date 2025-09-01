@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import wae from 'web-audio-engine';
-import { buildGraphAsync } from '../dist/index.js';
+import { buildGraphAsync, createMemoryTrace } from '../dist/index.js';
 
 const { OfflineAudioContext } = wae;
 const __filename = fileURLToPath(import.meta.url);
@@ -93,7 +93,8 @@ async function main() {
     ]
   };
 
-  const g = await buildGraphAsync(ctx, spec);
+  const trace = createMemoryTrace();
+  const g = await buildGraphAsync(ctx, spec, trace);
   // emitter auto-connects to destination
   const rendered = await ctx.startRendering();
 
@@ -106,7 +107,10 @@ async function main() {
   const outPath = path.join(__dirname, 'output-complex.wav');
   fs.writeFileSync(outPath, wav);
   console.log(`Wrote ${outPath}`);
+
+  const tracePath = path.join(__dirname, 'output-complex-trace.txt');
+  fs.writeFileSync(tracePath, trace.getLines().join('\n'));
+  console.log(`Trace written to ${tracePath}`);
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });
-

@@ -20,17 +20,20 @@ export interface EmitterParams {
 
 export function createEmitterChain(
   context: BaseAudioContext,
-  spec: GraphNodeSpec
+  spec: GraphNodeSpec,
+  trace?: { log: (s: string) => void }
 ): { input: AudioNode; output: AudioNode } {
   const p = (spec.params || {}) as Partial<EmitterParams>;
   const gain = context.createGain();
   if (typeof p.gain === 'number') gain.gain.value = p.gain;
+  trace?.log?.(`Emitter[${spec.id}] gain=${p.gain ?? 1}`);
 
   const type = p.emitterType ?? 'global';
   if (type === 'spatial') {
     const panner = context.createPanner();
     if (p.spatialProperties?.spatializationModel === 'HRTF') panner.panningModel = 'HRTF';
     else panner.panningModel = 'equalpower';
+    trace?.log?.(`Emitter[${spec.id}].panner.panningModel=${panner.panningModel}`);
     const att = p.spatialProperties?.attenuation;
     if (att) {
       if (att.distanceModel && att.distanceModel !== 'custom') panner.distanceModel = att.distanceModel as DistanceModelType;
@@ -48,4 +51,3 @@ export function createEmitterChain(
   // global: input -> gain -> destination
   return { input: gain, output: gain };
 }
-

@@ -7,10 +7,11 @@ export interface DelayParams {
 
 export function createDelay(
   context: BaseAudioContext,
-  spec: GraphNodeSpec
+  spec: GraphNodeSpec,
+  trace?: { log: (s: string) => void }
 ): DelayNode {
   const p = (spec.params || {}) as Partial<DelayParams>;
   const node = context.createDelay(p.maxDelayTime);
-  if (typeof p.delayTime === 'number') node.delayTime.setValueAtTime(p.delayTime, context.currentTime);
+  if (typeof p.delayTime === 'number') { node.delayTime.setValueAtTime(p.delayTime, context.currentTime); trace?.log?.(`Delay[${spec.id}].delayTime.setValueAtTime(${p.delayTime}, ${context.currentTime})`); }
   return node;
 }
