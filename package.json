@@ -26,6 +26,8 @@
     "example:emitter": "node examples/render-emitter.mjs",
     "example:complex": "node examples/render-complex-graph.mjs",
     "example:drum": "node examples/render-drum.mjs",
+    "example:snare": "node examples/render-snare.mjs",
+    "example:cymbal": "node examples/render-cymbal.mjs",
     "examples": "npm-run-all -s build example:osc example:osc-pwm example:gain example:biquad example:delay example:buffer example:convolver example:convolver-mix example:stereo example:panner example:splitter example:merger example:channel-mixer example:audio-mixer example:emitter example:complex",
     "dev": "npm run build && vite"
   },
