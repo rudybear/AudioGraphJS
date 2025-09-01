@@ -13,7 +13,8 @@ export type NodeKind =
   | 'channel-merger'
   | 'channel-mixer'
   | 'audio-mixer'
-  | 'emitter';
+  | 'emitter'
+  | 'wave-shaper';
 
 export type ParamValue = number | boolean | string | null;
 

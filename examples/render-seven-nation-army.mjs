@@ -46,12 +46,21 @@ async function main() {
     sampleRate: sr,
     nodes: [
       { id: 'osc', kind: 'oscillator', params: { type: 'square', pulseWidth: 0.25, frequency: noteFreq('E2'), startTime: 0 } },
-      { id: 'lpf', kind: 'biquad-filter', params: { type: 'lowpass', frequency: 500, Q: 0.8 } },
-      { id: 'amp', kind: 'gain', params: { gain: 0.0 } }
+      { id: 'lpf_pre', kind: 'biquad-filter', params: { type: 'lowpass', frequency: 800, Q: 0.7 } },
+      { id: 'dist', kind: 'wave-shaper', params: { amount: 0.7, oversample: '2x' } },
+      { id: 'lpf_post', kind: 'biquad-filter', params: { type: 'lowpass', frequency: 1200, Q: 0.7 } },
+      { id: 'amp', kind: 'gain', params: { gain: 0.0 } },
+      { id: 'slap', kind: 'delay', params: { maxDelayTime: 0.3, delayTime: 0.07 } },
+      { id: 'slapGain', kind: 'gain', params: { gain: 0.15 } }
     ],
     connections: [
-      { from: { node: 'osc' }, to: { node: 'lpf' } },
-      { from: { node: 'lpf' }, to: { node: 'amp' } }
+      { from: { node: 'osc' }, to: { node: 'lpf_pre' } },
+      { from: { node: 'lpf_pre' }, to: { node: 'dist' } },
+      { from: { node: 'dist' }, to: { node: 'lpf_post' } },
+      { from: { node: 'lpf_post' }, to: { node: 'amp' } },
+      // Slapback send
+      { from: { node: 'amp' }, to: { node: 'slap' } },
+      { from: { node: 'slap' }, to: { node: 'slapGain' } }
     ]
   };
 
@@ -65,7 +74,8 @@ async function main() {
 
   const osc = g.nodes.get('osc');
   const amp = g.nodes.get('amp').gain;
-  const lpf = g.nodes.get('lpf');
+  const lpfPre = g.nodes.get('lpf_pre');
+  const lpfPost = g.nodes.get('lpf_post');
 
   for (let bar = 0; bar < bars; bar += 2) {
     const baseT = bar * barDur;
@@ -81,8 +91,10 @@ async function main() {
         amp.linearRampToValueAtTime(0.9, t + 0.01);
         amp.linearRampToValueAtTime(0.4, t + 0.1);
         amp.linearRampToValueAtTime(0.0, t + step * 0.95);
-        lpf.frequency.setValueAtTime(600, t);
-        lpf.frequency.linearRampToValueAtTime(300, t + 0.12);
+        lpfPre.frequency.setValueAtTime(700, t);
+        lpfPre.frequency.linearRampToValueAtTime(500, t + 0.12);
+        lpfPost.frequency.setValueAtTime(1200, t);
+        lpfPost.frequency.linearRampToValueAtTime(900, t + 0.12);
       } else {
         // Rest: ensure amplitude down
         amp.setValueAtTime(0.0, t);
@@ -92,6 +104,9 @@ async function main() {
 
   const rendered = await ctx.startRendering();
   const out = rendered.getChannelData(0);
+  // Mix dry and slapback by connecting to destination
+  g.nodes.get('amp')?.connect(ctx.destination);
+  g.nodes.get('slapGain')?.connect(ctx.destination);
   const wav = writeWavPCM16LE({ samples: out, sampleRate: sr, numChannels: 1 });
   const outPath = path.join(__dirname, 'output-seven-nation-army.wav');
   fs.writeFileSync(outPath, wav);
@@ -99,4 +114,3 @@ async function main() {
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });
-

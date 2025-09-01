@@ -12,6 +12,7 @@ import { createChannelMerger } from '../nodes/channelMerger.js';
 import { createChannelMixer } from '../nodes/channelMixer.js';
 import { createAudioMixer } from '../nodes/audioMixer.js';
 import { createEmitterChain } from '../nodes/emitter.js';
+import { createWaveShaper } from '../nodes/waveShaper.js';
 import type { TraceLogger } from './trace.js';
 
 function buildNode(context: BaseAudioContext, spec: GraphNodeSpec, trace?: TraceLogger): AudioNode {
@@ -52,6 +53,9 @@ function buildNode(context: BaseAudioContext, spec: GraphNodeSpec, trace?: Trace
     case 'audio-mixer':
       trace?.log(`createAudioMixer id=${spec.id}`);
       return createAudioMixer(context, spec, trace);
+    case 'wave-shaper':
+      trace?.log(`createWaveShaper id=${spec.id}`);
+      return createWaveShaper(context, spec, trace);
     default:
       throw new Error(`Unsupported node kind: ${spec.kind}`);
   }
