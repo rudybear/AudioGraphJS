@@ -1,0 +1,311 @@
+{
+  "version": "draft-2025-09-01",
+  "sources": [
+    {
+      "spec_name": "source",
+      "io": "0 in / 1 out",
+      "params": [
+        { "name": "id", "type": "integer", "required": true },
+        { "name": "data", "type": "object (audio|oscillator)", "required": true },
+        { "name": "priority", "type": "integer", "required": false },
+        { "name": "gain", "type": "number", "required": false },
+        { "name": "state", "type": "string (paused|playing|stopped)", "required": false },
+        { "name": "autoPlay", "type": "boolean", "required": false },
+        { "name": "loop", "type": "boolean", "required": false },
+        { "name": "loopStart", "type": "number (ms)", "required": false },
+        { "name": "loopEnd", "type": "number (ms)", "required": false },
+        { "name": "playbackSpeed", "type": "number", "required": false },
+        { "name": "duration", "type": "number (ms)", "required": false },
+        { "name": "offset", "type": "number (ms)", "required": false },
+        { "name": "when", "type": "number (s)", "required": false },
+        { "name": "channelInterpretation", "type": "string (speakers|discrete)", "required": false }
+      ],
+      "web_audio_mapping": {
+        "node": "AudioBufferSourceNode",
+        "params": {
+          "playbackSpeed": "playbackRate",
+          "loop": "loop",
+          "loopStart": "loopStart (s, convert from ms)",
+          "loopEnd": "loopEnd (s, convert from ms)",
+          "when": "start(when, offset, duration)",
+          "offset": "start offset (s)",
+          "duration": "start duration (s)"
+        }
+      },
+      "status": "implemented",
+      "notes": "Supports buffer and URI (internal). Uses single-shot semantics. Gain is handled by downstream GainNode when needed."
+    },
+    {
+      "spec_name": "audio_data",
+      "io": "n/a",
+      "params": [
+        { "name": "bufferView", "type": "integer", "required": true },
+        { "name": "encodingProperties", "type": "object", "required": true },
+        { "name": "mimeType", "type": "string", "required": true },
+        { "name": "uri", "type": "string", "required": true }
+      ],
+      "web_audio_mapping": { "node": "AudioBuffer", "params": { "uri": "fetch+decodeAudioData" } },
+      "status": "partial",
+      "notes": "Loader supports data:/file: in Node; browser uses fetch. bufferView integration pending glTF binding."
+    },
+    {
+      "spec_name": "oscillator_data",
+      "io": "n/a",
+      "params": [
+        { "name": "type", "type": "string (saw|square|triangle|sine|custom)", "required": true },
+        { "name": "frequency", "type": "number (Hz, 0-20k)", "required": true },
+        { "name": "pulseWidth", "type": "number [0..1] (square only)", "required": false }
+      ],
+      "web_audio_mapping": {
+        "node": "OscillatorNode",
+        "params": {
+          "type": "type",
+          "frequency": "frequency",
+          "pulseWidth": "PeriodicWave (custom) — static"
+        }
+      },
+      "status": "implemented",
+      "notes": "Basic waveforms implemented; pulseWidth supported statically via PeriodicWave. No runtime modulation."
+    }
+  ],
+  "sink": [
+    {
+      "spec_name": "emitter",
+      "io": "1 in / 0 out",
+      "params": [
+        { "name": "id", "type": "integer", "required": true },
+        { "name": "emitterType", "type": "string (global|spatial)", "required": true },
+        { "name": "gain", "type": "number [0,1]", "required": false },
+        { "name": "spatialProperties", "type": "object", "required": false }
+      ],
+      "web_audio_mapping": {
+        "node": "GainNode + (StereoPannerNode|PannerNode)",
+        "params": {
+          "gain": "GainNode.gain",
+          "spatializationModel": "PannerNode.panningModel",
+          "attenuation.distanceModel": "PannerNode.distanceModel",
+          "attenuation.refDistance": "PannerNode.refDistance",
+          "attenuation.maxDistance": "PannerNode.maxDistance",
+          "attenuation.rolloffFactor": "PannerNode.rolloffFactor",
+          "cone*": "PannerNode.cone*"
+        }
+      },
+      "status": "partial",
+      "notes": "Global uses StereoPanner/none; spatial uses PannerNode. Node backend lacks full 3D methods."
+    },
+    {
+      "spec_name": "listener",
+      "io": "0 in / 0 out",
+      "params": [],
+      "web_audio_mapping": { "node": "AudioListener", "params": {} },
+      "status": "planned",
+      "notes": "Attached to glTF camera; driven by scene transforms."
+    }
+  ],
+  "processors": [
+    {
+      "spec_name": "gain",
+      "io": "1 in / 1 out",
+      "params": [
+        { "name": "id", "type": "integer", "required": true },
+        { "name": "gain", "type": "number [0,1]", "required": true },
+        { "name": "interpolation", "type": "string", "required": false },
+        { "name": "duration", "type": "number (ms)", "required": false }
+      ],
+      "web_audio_mapping": { "node": "GainNode", "params": { "gain": "gain" } },
+      "status": "implemented",
+      "notes": "Automation TBD; currently sets static value."
+    },
+    {
+      "spec_name": "delay",
+      "io": "1 in / 1 out",
+      "params": [
+        { "name": "id", "type": "integer", "required": true },
+        { "name": "delayTime", "type": "number (ms)", "required": false }
+      ],
+      "web_audio_mapping": { "node": "DelayNode", "params": { "delayTime": "delayTime (s)" } },
+      "status": "implemented",
+      "notes": "Converts ms to seconds; maxDelayTime configurable."
+    },
+    {
+      "spec_name": "pitch_shifter",
+      "io": "1 in / 1 out",
+      "params": [
+        { "name": "id", "type": "integer", "required": true },
+        { "name": "pitch", "type": "number (semitones)", "required": false }
+      ],
+      "web_audio_mapping": { "node": "(AudioWorkletNode or custom)", "params": {} },
+      "status": "not_implemented",
+      "notes": "Not provided by Web Audio standard nodes; requires DSP."
+    },
+    {
+      "spec_name": "channel_splitter",
+      "io": "1 in / N out",
+      "params": [
+        { "name": "id", "type": "integer", "required": true },
+        { "name": "channelInterpretation", "type": "string", "required": false }
+      ],
+      "web_audio_mapping": { "node": "ChannelSplitterNode", "params": {} },
+      "status": "implemented",
+      "notes": "Outputs equal to input channels; used with merger/mixer."
+    },
+    {
+      "spec_name": "channel_merger",
+      "io": "N in / 1 out",
+      "params": [
+        { "name": "id", "type": "integer", "required": true },
+        { "name": "channelInterpretation", "type": "string", "required": false }
+      ],
+      "web_audio_mapping": { "node": "ChannelMergerNode", "params": {} },
+      "status": "implemented",
+      "notes": "Merges N single-channel inputs into multichannel stream."
+    },
+    {
+      "spec_name": "channel_mixer",
+      "io": "1 in / 1 out",
+      "params": [
+        { "name": "id", "type": "integer", "required": true },
+        { "name": "outputChannels", "type": "number", "required": false }
+      ],
+      "web_audio_mapping": { "node": "GainNode (channelCountMode='explicit')", "params": {} },
+      "status": "implemented",
+      "notes": "Configures channelCountMode='explicit' and channelCount to request up/down-mix per Web Audio rules."
+    },
+    {
+      "spec_name": "audio_mixer",
+      "io": "N in / 1 out",
+      "params": [ { "name": "id", "type": "integer", "required": true } ],
+      "web_audio_mapping": { "node": "GainNode (summing junction)", "params": {} },
+      "status": "implemented",
+      "notes": "Summing via multiple connections to a GainNode input; per-input gains upstream."
+    },
+    {
+      "spec_name": "filter_lowpass",
+      "io": "1 in / 1 out",
+      "params": [
+        { "name": "id", "type": "integer", "required": true },
+        { "name": "frequency", "type": "number (Hz)", "required": true },
+        { "name": "qualityFactor", "type": "number", "required": false },
+        { "name": "bypass", "type": "boolean", "required": false }
+      ],
+      "web_audio_mapping": { "node": "BiquadFilterNode(type='lowpass')", "params": { "frequency": "frequency", "qualityFactor": "Q" } },
+      "status": "implemented",
+      "notes": "Bypass not native; requires routing toggle."
+    },
+    {
+      "spec_name": "filter_highpass",
+      "io": "1 in / 1 out",
+      "params": [
+        { "name": "id", "type": "integer", "required": true },
+        { "name": "frequency", "type": "number (Hz)", "required": true },
+        { "name": "qualityFactor", "type": "number", "required": false },
+        { "name": "bypass", "type": "boolean", "required": false }
+      ],
+      "web_audio_mapping": { "node": "BiquadFilterNode(type='highpass')", "params": { "frequency": "frequency", "qualityFactor": "Q" } },
+      "status": "implemented",
+      "notes": ""
+    },
+    {
+      "spec_name": "filter_bandpass",
+      "io": "1 in / 1 out",
+      "params": [
+        { "name": "id", "type": "integer", "required": true },
+        { "name": "frequency", "type": "number (Hz)", "required": true },
+        { "name": "qualityFactor", "type": "number", "required": false },
+        { "name": "bypass", "type": "boolean", "required": false }
+      ],
+      "web_audio_mapping": { "node": "BiquadFilterNode(type='bandpass')", "params": { "frequency": "frequency", "qualityFactor": "Q" } },
+      "status": "implemented",
+      "notes": ""
+    },
+    {
+      "spec_name": "filter_lowshelf",
+      "io": "1 in / 1 out",
+      "params": [
+        { "name": "id", "type": "integer", "required": true },
+        { "name": "frequency", "type": "number (Hz)", "required": true },
+        { "name": "gain", "type": "number (dB)", "required": false },
+        { "name": "bypass", "type": "boolean", "required": false }
+      ],
+      "web_audio_mapping": { "node": "BiquadFilterNode(type='lowshelf')", "params": { "frequency": "frequency", "gain": "gain" } },
+      "status": "implemented",
+      "notes": ""
+    },
+    {
+      "spec_name": "filter_highshelf",
+      "io": "1 in / 1 out",
+      "params": [
+        { "name": "id", "type": "integer", "required": true },
+        { "name": "frequency", "type": "number (Hz)", "required": true },
+        { "name": "gain", "type": "number (dB)", "required": false },
+        { "name": "bypass", "type": "boolean", "required": false }
+      ],
+      "web_audio_mapping": { "node": "BiquadFilterNode(type='highshelf')", "params": { "frequency": "frequency", "gain": "gain" } },
+      "status": "implemented",
+      "notes": ""
+    },
+    {
+      "spec_name": "filter_peaking",
+      "io": "1 in / 1 out",
+      "params": [
+        { "name": "id", "type": "integer", "required": true },
+        { "name": "frequency", "type": "number (Hz)", "required": true },
+        { "name": "qualityFactor", "type": "number", "required": false },
+        { "name": "gain", "type": "number (dB)", "required": false },
+        { "name": "bypass", "type": "boolean", "required": false }
+      ],
+      "web_audio_mapping": { "node": "BiquadFilterNode(type='peaking')", "params": { "frequency": "frequency", "qualityFactor": "Q", "gain": "gain" } },
+      "status": "implemented",
+      "notes": ""
+    },
+    {
+      "spec_name": "filter_notch",
+      "io": "1 in / 1 out",
+      "params": [
+        { "name": "id", "type": "integer", "required": true },
+        { "name": "frequency", "type": "number (Hz)", "required": true },
+        { "name": "qualityFactor", "type": "number", "required": false },
+        { "name": "bypass", "type": "boolean", "required": false }
+      ],
+      "web_audio_mapping": { "node": "BiquadFilterNode(type='notch')", "params": { "frequency": "frequency", "qualityFactor": "Q" } },
+      "status": "implemented",
+      "notes": ""
+    },
+    {
+      "spec_name": "filter_allpass",
+      "io": "1 in / 1 out",
+      "params": [
+        { "name": "id", "type": "integer", "required": true },
+        { "name": "frequency", "type": "number (Hz)", "required": true },
+        { "name": "qualityFactor", "type": "number", "required": false },
+        { "name": "bypass", "type": "boolean", "required": false }
+      ],
+      "web_audio_mapping": { "node": "BiquadFilterNode(type='allpass')", "params": { "frequency": "frequency", "qualityFactor": "Q" } },
+      "status": "implemented",
+      "notes": ""
+    },
+    {
+      "spec_name": "reverb",
+      "io": "1 in / 1 out",
+      "params": [
+        { "name": "id", "type": "integer", "required": true },
+        { "name": "mix", "type": "number [0,100]", "required": true },
+        { "name": "earlyReflectionsGain", "type": "number", "required": true },
+        { "name": "diffusionGain", "type": "number", "required": true },
+        { "name": "roomSize", "type": "number (m)", "required": true },
+        { "name": "reflectivity", "type": "number [0,100]", "required": true },
+        { "name": "reflectivityHigh", "type": "number", "required": true },
+        { "name": "reflectivityLow", "type": "number", "required": true },
+        { "name": "earlyReflections", "type": "number [0,32]", "required": true },
+        { "name": "minDistance", "type": "number", "required": true },
+        { "name": "maxDistance", "type": "number", "required": true },
+        { "name": "reflectionDelay", "type": "number (ms)", "required": true },
+        { "name": "reverbDelay", "type": "number (ms)", "required": true },
+        { "name": "bypass", "type": "boolean", "required": false }
+      ],
+      "web_audio_mapping": { "node": "ConvolverNode (approx) or custom reverb", "params": {} },
+      "status": "not_implemented",
+      "notes": "Spec parameters imply algorithmic reverb. Convolver supports IR-based; mapping TBD."
+    }
+  ]
+}

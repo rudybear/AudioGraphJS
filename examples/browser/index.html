@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AudioGraphJS Demo</title>
+    <style>
+      body { font-family: system-ui, sans-serif; padding: 2rem; }
+      button { font-size: 1rem; padding: 0.5rem 1rem; margin-right: 1rem; }
+      .row { margin: 1rem 0; }
+    </style>
+  </head>
+  <body>
+    <h1>AudioGraphJS Browser Demo</h1>
+    <p>Sine 220 Hz → Gain(0.2) → Lowpass(2 kHz) → Delay(100 ms)</p>
+    <div class="row">
+      <button id="playBtn">Play</button>
+      <button id="stopBtn" disabled>Stop</button>
+    </div>
+    <script type="module" src="./main.js"></script>
+  </body>
+  </html>
+

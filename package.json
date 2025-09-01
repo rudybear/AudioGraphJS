@@ -1,0 +1,46 @@
+{
+  "name": "audio-graph-js",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Runtime for KHR_audio_graph-style audio graphs using Web Audio API.",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "lint": "eslint .",
+    "format": "prettier -w .",
+    "example:osc": "node examples/render-tone.mjs",
+    "example:osc-pwm": "node examples/render-osc-pwm.mjs",
+    "example:gain": "node examples/render-gain.mjs",
+    "example:biquad": "node examples/render-biquad.mjs",
+    "example:delay": "node examples/render-delay.mjs",
+    "example:buffer": "node examples/render-buffer.mjs",
+    "example:convolver": "node examples/render-convolver.mjs",
+    "example:convolver-mix": "node examples/render-convolver-mix.mjs",
+    "example:stereo": "node examples/render-stereo-panner.mjs",
+    "example:panner": "node examples/render-panner.mjs",
+    "example:splitter": "node examples/render-splitter.mjs",
+    "example:merger": "node examples/render-merger.mjs",
+    "example:channel-mixer": "node examples/render-channel-mixer.mjs",
+    "example:audio-mixer": "node examples/render-audio-mixer.mjs",
+    "example:emitter": "node examples/render-emitter.mjs",
+    "examples": "npm-run-all -s build example:osc example:osc-pwm example:gain example:biquad example:delay example:buffer example:convolver example:convolver-mix example:stereo example:panner example:splitter example:merger example:channel-mixer example:audio-mixer example:emitter",
+    "dev": "npm run build && vite"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.10",
+    "eslint": "^9.9.0",
+    "prettier": "^3.3.3",
+    "typescript": "^5.6.2",
+    "vite": "^7.1.4",
+    "vitest": "^1.6.0",
+    "web-audio-engine": "^0.13.4",
+    "npm-run-all": "^4.1.5"
+  },
+  "dependencies": {
+    "standardized-audio-context": "^25.3.62"
+  }
+}
