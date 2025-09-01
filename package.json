@@ -24,7 +24,8 @@
     "example:channel-mixer": "node examples/render-channel-mixer.mjs",
     "example:audio-mixer": "node examples/render-audio-mixer.mjs",
     "example:emitter": "node examples/render-emitter.mjs",
-    "examples": "npm-run-all -s build example:osc example:osc-pwm example:gain example:biquad example:delay example:buffer example:convolver example:convolver-mix example:stereo example:panner example:splitter example:merger example:channel-mixer example:audio-mixer example:emitter",
+    "example:complex": "node examples/render-complex-graph.mjs",
+    "examples": "npm-run-all -s build example:osc example:osc-pwm example:gain example:biquad example:delay example:buffer example:convolver example:convolver-mix example:stereo example:panner example:splitter example:merger example:channel-mixer example:audio-mixer example:emitter example:complex",
     "dev": "npm run build && vite"
   },
   "engines": {
