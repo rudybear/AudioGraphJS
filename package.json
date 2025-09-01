@@ -28,6 +28,7 @@
     "example:drum": "node examples/render-drum.mjs",
     "example:snare": "node examples/render-snare.mjs",
     "example:cymbal": "node examples/render-cymbal.mjs",
+    "example:drum-party": "node examples/render-drum-party.mjs",
     "examples": "npm-run-all -s build example:osc example:osc-pwm example:gain example:biquad example:delay example:buffer example:convolver example:convolver-mix example:stereo example:panner example:splitter example:merger example:channel-mixer example:audio-mixer example:emitter example:complex",
     "dev": "npm run build && vite"
   },
