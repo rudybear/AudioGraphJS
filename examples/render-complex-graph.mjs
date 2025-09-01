@@ -108,7 +108,7 @@ async function main() {
   fs.writeFileSync(outPath, wav);
   console.log(`Wrote ${outPath}`);
 
-  const tracePath = path.join(__dirname, 'output-complex-trace.txt');
+  const tracePath = path.join(__dirname, '..', 'testslog.txt');
   fs.writeFileSync(tracePath, trace.getLines().join('\n'));
   console.log(`Trace written to ${tracePath}`);
 }
