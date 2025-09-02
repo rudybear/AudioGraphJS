@@ -1,8 +1,8 @@
-createOscillator id=0
-Oscillator[0].type=1
-Oscillator[0].frequency.setValueAtTime(440, 0)
-Oscillator[0].start(0)
-createGain id=1
-Gain[1].gain.setValueAtTime(0.500, 0)
-connect 0 -> 1
-connect output sink 1 -> destination
+createOscillator id=src
+Oscillator[src].type=sine
+Oscillator[src].frequency.setValueAtTime(440, 0)
+Oscillator[src].start(0)
+createGain id=gain
+Gain[gain].gain.setValueAtTime(0.500, 0)
+connect src -> gain
+connect output sink gain -> destination

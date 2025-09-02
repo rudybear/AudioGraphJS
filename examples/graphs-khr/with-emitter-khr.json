@@ -7,8 +7,8 @@
         {
           "name": "with-emitter",
           "nodes": [
-            { "kind": "source", "params": { "data": { "oscillator": { "type": 1, "frequency": 330, "pulseWidth": 0.25 } }, "when": 0, "duration": 500 } },
-            { "kind": "emitter", "params": { "emitterType": "global", "gain": 0.9 } }
+            { "label": "src", "kind": "source", "params": { "data": { "oscillator": { "type": 1, "frequency": 330, "pulseWidth": 0.25 } }, "when": 0, "duration": 500 } },
+            { "label": "emit", "kind": "emitter", "params": { "emitterType": "global", "gain": 0.9 } }
           ],
           "connections": [ { "from": { "node": 0 }, "to": { "node": 1 } } ]
         }
@@ -16,4 +16,3 @@
     }
   }
 }
-

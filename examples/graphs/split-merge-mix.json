@@ -2,8 +2,8 @@
   "nodes": [
     { "id": "src", "kind": "oscillator", "params": { "type": "sine", "frequency": 220, "startTime": 0 } },
     { "id": "split", "kind": "channel-splitter", "params": { "numberOfOutputs": 2 } },
-    { "id": "lp", "kind": "biquad-filter", "params": { "type": "lowpass", "frequency": 800 } },
-    { "id": "hp", "kind": "biquad-filter", "params": { "type": "highpass", "frequency": 1200 } },
+    { "id": "lp", "kind": "biquad-filter", "params": { "type": "lowpass", "frequency": 800, "Q": 0.707 } },
+    { "id": "hp", "kind": "biquad-filter", "params": { "type": "highpass", "frequency": 1200, "Q": 0.707 } },
     { "id": "merge", "kind": "channel-merger", "params": { "numberOfInputs": 2 } },
     { "id": "mix", "kind": "audio-mixer", "params": {} },
     { "id": "out", "kind": "gain", "params": { "gain": 0.8 } }
@@ -19,4 +19,3 @@
   ],
   "outputs": ["out"]
 }
-

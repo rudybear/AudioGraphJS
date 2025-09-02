@@ -6,10 +6,12 @@ createChannelSplitter id=split
 createBiquadFilter id=lp
 Biquad[lp].type=lowpass
 Biquad[lp].frequency.setValueAtTime(800, 0)
+Biquad[lp].Q.setValueAtTime(0.707, 0)
 wrapBypass(dry=0, wet=1)
 createBiquadFilter id=hp
 Biquad[hp].type=highpass
 Biquad[hp].frequency.setValueAtTime(1200, 0)
+Biquad[hp].Q.setValueAtTime(0.707, 0)
 wrapBypass(dry=0, wet=1)
 createChannelMerger id=merge
 createAudioMixer id=mix

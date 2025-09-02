@@ -14,10 +14,25 @@ function readJson(p) {
   return JSON.parse(text);
 }
 
+function mapOscType(t) {
+  if (typeof t === 'string') return t;
+  switch (t) {
+    case 0: return 'sine';
+    case 1: return 'square';
+    case 2: return 'sawtooth';
+    case 3: return 'triangle';
+    default: return 'sine';
+  }
+}
+
 function mapNodeKind(specKind, params) {
   switch (specKind) {
     case 'source':
-      if (params?.data?.oscillator) return { kind: 'oscillator', params: { ...params.data.oscillator, ...mapSourcePlayback(params) } };
+      if (params?.data?.oscillator) {
+        const osc = { ...params.data.oscillator };
+        if (osc.type !== undefined) osc.type = mapOscType(osc.type);
+        return { kind: 'oscillator', params: { ...osc, ...mapSourcePlayback(params) } };
+      }
       if (typeof params?.data?.audioData === 'number') {
         // We'll pass through via uri if present on audioData at root; mapper will resolve later
         return { kind: 'audio-buffer-source', params: mapSourcePlayback(params) };
@@ -79,17 +94,20 @@ function mapFilterParams(kind, p) {
 
 function mapGraph(extRoot, graph) {
   const nodes = [];
+  const idByIndex = [];
   // Build nodes mapping spec kinds to runtime kinds
   for (const n of graph.nodes || []) {
     const mapped = mapNodeKind(n.kind || n.type || n.nodetype || n.name || 'unknown', n.params || n);
-    // Generate string id as index
-    nodes.push({ id: String(nodes.length), kind: mapped.kind, params: mapped.params });
+    const id = (n.label && typeof n.label === 'string') ? n.label : String(nodes.length);
+    idByIndex.push(id);
+    nodes.push({ id, kind: mapped.kind, params: mapped.params });
   }
   const connections = [];
   for (const c of graph.connections || []) {
-    connections.push({ from: { node: String(c.from.node), output: c.from.output }, to: { node: String(c.to.node), input: c.to.input } });
+    connections.push({ from: { node: idByIndex[c.from.node], output: c.from.output }, to: { node: idByIndex[c.to.node], input: c.to.input } });
   }
-  return { nodes, connections };
+  const outputs = Array.isArray(graph.outputs) ? graph.outputs.map((i) => idByIndex[i]) : undefined;
+  return { nodes, connections, outputs };
 }
 
 async function runOne(file) {

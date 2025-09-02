@@ -7,8 +7,8 @@
         {
           "name": "simple-outputs",
           "nodes": [
-            { "kind": "source", "params": { "data": { "oscillator": { "type": 1, "frequency": 440, "pulseWidth": 0.25 } }, "when": 0, "duration": 500 } },
-            { "kind": "gain", "params": { "gain": 0.5 } }
+            { "label": "src", "kind": "source", "params": { "data": { "oscillator": { "type": 0, "frequency": 440, "pulseWidth": 0.25 } }, "when": 0, "duration": 500 } },
+            { "label": "gain", "kind": "gain", "params": { "gain": 0.5 } }
           ],
           "connections": [
             { "from": { "node": 0 }, "to": { "node": 1 } }
@@ -19,4 +19,3 @@
     }
   }
 }
-
