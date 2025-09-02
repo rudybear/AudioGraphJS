@@ -1,0 +1,15 @@
+createOscillator id=osc
+Oscillator[osc].type=square
+Oscillator[osc].frequency.setValueAtTime(55, 0)
+Oscillator[osc].setPeriodicWave(pulseWidth=0.200)
+Oscillator[osc].start(0)
+createBiquadFilter id=lpf
+Biquad[lpf].type=lowpass
+Biquad[lpf].frequency.setValueAtTime(400, 0)
+Biquad[lpf].Q.setValueAtTime(0.800, 0)
+wrapBypass(dry=0, wet=1)
+createGain id=amp
+Gain[amp].gain.setValueAtTime(0, 0)
+connect osc -> lpf
+connect lpf -> amp
+connect output sink amp -> destination

@@ -1,0 +1,24 @@
+{
+  "extensionsUsed": ["KHR_audio_graph"],
+  "extensions": {
+    "KHR_audio_graph": {
+      "schemaVersion": "0.1",
+      "graphs": [
+        {
+          "name": "bass",
+          "nodes": [
+            { "label": "osc", "kind": "source", "params": { "data": { "oscillator": { "type": 1, "frequency": 55, "pulseWidth": 0.2 } }, "when": 0, "duration": 3000 } },
+            { "label": "lpf", "kind": "lowpass", "params": { "frequency": 400, "qualityFactor": 0.8 } },
+            { "label": "amp", "kind": "gain", "params": { "gain": 0.0 } }
+          ],
+          "connections": [
+            { "from": { "node": 0 }, "to": { "node": 1 } },
+            { "from": { "node": 1 }, "to": { "node": 2 } }
+          ],
+          "outputs": [2]
+        }
+      ]
+    }
+  }
+}
+

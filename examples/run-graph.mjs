@@ -235,6 +235,55 @@ async function main() {
         const t0 = 0;
         env?.gain.setValueAtTime?.(1.0, t0);
         (env?.gain.exponentialRampToValueAtTime ? env.gain.exponentialRampToValueAtTime.bind(env.gain) : env?.gain.linearRampToValueAtTime?.bind(env.gain))?.(env?.gain.exponentialRampToValueAtTime ? 0.0001 : 0, t0 + 1.8);
+      } else if (nameKey.includes('bass')) {
+        const amp = built.nodes.get('amp')?.gain;
+        const lpf = undefined; // wrapped filter params not accessible; skip filter envelope in automation
+        const t0 = 0;
+        amp?.setValueAtTime?.(0.0, t0);
+        amp?.linearRampToValueAtTime?.(0.8, t0 + 0.05);
+        amp?.linearRampToValueAtTime?.(0.6, t0 + 0.2);
+        amp?.linearRampToValueAtTime?.(0.0, t0 + 2.8);
+        // skip lpf parameter automation to avoid wrapper indirection
+      } else if (nameKey.includes('seven-nation-army')) {
+        const A4 = 440;
+        function noteFreq(name) {
+          const semis = { C: -9, 'C#': -8, D: -7, 'D#': -6, E: -5, F: -4, 'F#': -3, G: -2, 'G#': -1, A: 0, 'A#': 1, B: 2 };
+          const m = name.match(/^([A-G]#?)(\d)$/);
+          const n = m[1], oct = parseInt(m[2]);
+          const a4Index = 4 * 12 + 9;
+          const idx = oct * 12 + (9 + semis[n]);
+          const semitoneDiff = idx - a4Index;
+          return A4 * Math.pow(2, semitoneDiff / 12);
+        }
+        const bpm = 124;
+        const secPerBeat = 60 / bpm;
+        const step = secPerBeat / 2;
+        const barDur = 4 * secPerBeat;
+        const bars = 2;
+        const riff1 = ['E2','E2','G2','E2','D2','C2','B1', null];
+        const riff2 = ['E2','E2','G2','E2','D2','C2','D2','C2'];
+        const pattern = riff1.concat(riff2);
+        const osc = built.nodes.get('osc');
+        const amp = built.nodes.get('amp')?.gain;
+        const lpfPre = undefined; const lpfPost = undefined; // skip filter parameter automation
+        for (let bar = 0; bar < bars; bar += 2) {
+          const baseT = bar * barDur;
+          for (let i = 0; i < pattern.length; i++) {
+            const t = baseT + i * step;
+            const note = pattern[i];
+            if (note) {
+              const f = noteFreq(note);
+              osc?.frequency.setValueAtTime?.(f, t);
+              amp?.setValueAtTime?.(0.0, t);
+              amp?.linearRampToValueAtTime?.(0.9, t + 0.01);
+              amp?.linearRampToValueAtTime?.(0.4, t + 0.1);
+              amp?.linearRampToValueAtTime?.(0.0, t + step * 0.95);
+            // skip lpf pre/post parameter automation to avoid wrapper indirection
+            } else {
+              amp?.setValueAtTime?.(0.0, t);
+            }
+          }
+        }
       }
     }
     const rendered = await ctx.startRendering();

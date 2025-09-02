@@ -1,0 +1,21 @@
+{
+  "nodes": [
+    { "id": "osc", "kind": "oscillator", "params": { "type": "square", "pulseWidth": 0.25, "frequency": 82.41, "startTime": 0 } },
+    { "id": "lpf_pre", "kind": "biquad-filter", "params": { "type": "lowpass", "frequency": 800, "Q": 0.7 } },
+    { "id": "dist", "kind": "wave-shaper", "params": { "amount": 0.7, "oversample": "2x" } },
+    { "id": "lpf_post", "kind": "biquad-filter", "params": { "type": "lowpass", "frequency": 1200, "Q": 0.7 } },
+    { "id": "amp", "kind": "gain", "params": { "gain": 0.0 } },
+    { "id": "slap", "kind": "delay", "params": { "maxDelayTime": 0.3, "delayTime": 0.07 } },
+    { "id": "slapGain", "kind": "gain", "params": { "gain": 0.15 } }
+  ],
+  "connections": [
+    { "from": { "node": "osc" }, "to": { "node": "lpf_pre" } },
+    { "from": { "node": "lpf_pre" }, "to": { "node": "dist" } },
+    { "from": { "node": "dist" }, "to": { "node": "lpf_post" } },
+    { "from": { "node": "lpf_post" }, "to": { "node": "amp" } },
+    { "from": { "node": "amp" }, "to": { "node": "slap" } },
+    { "from": { "node": "slap" }, "to": { "node": "slapGain" } }
+  ],
+  "outputs": ["amp", "slapGain"]
+}
+
