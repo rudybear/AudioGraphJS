@@ -4,4 +4,6 @@ Oscillator[osc].frequency.setValueAtTime(440, 0)
 Oscillator[osc].start(0)
 createGain id=amp
 Gain[amp].gain.setValueAtTime(0.300, 0)
+createEmitter id=emit -> connect(emitter.output, destination)
 connect osc -> amp
+connect amp -> emit

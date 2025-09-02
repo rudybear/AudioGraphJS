@@ -1,9 +1,46 @@
 {
   "nodes": [
-    { "id": "src", "kind": "oscillator", "params": { "type": "sine", "frequency": 440, "startTime": 0 } },
-    { "id": "gain", "kind": "gain", "params": { "gain": 0.5 } }
+    {
+      "id": "src",
+      "kind": "oscillator",
+      "params": {
+        "type": "sine",
+        "frequency": 440,
+        "startTime": 0
+      }
+    },
+    {
+      "id": "gain",
+      "kind": "gain",
+      "params": {
+        "gain": 0.5
+      }
+    },
+    {
+      "id": "emit",
+      "kind": "emitter",
+      "params": {
+        "emitterType": "global",
+        "gain": 1
+      }
+    }
   ],
-  "connections": [ { "from": { "node": "src" }, "to": { "node": "gain" } } ],
-  "outputs": ["gain"]
+  "connections": [
+    {
+      "from": {
+        "node": "src"
+      },
+      "to": {
+        "node": "gain"
+      }
+    },
+    {
+      "from": {
+        "node": "gain"
+      },
+      "to": {
+        "node": "emit"
+      }
+    }
+  ]
 }
-

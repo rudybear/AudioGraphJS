@@ -1,8 +1,31 @@
 {
   "nodes": [
-    { "id": "osc", "kind": "oscillator", "params": { "type": "sine", "frequency": 440, "startTime": 0 } }
+    {
+      "id": "osc",
+      "kind": "oscillator",
+      "params": {
+        "type": "sine",
+        "frequency": 440,
+        "startTime": 0
+      }
+    },
+    {
+      "id": "emit",
+      "kind": "emitter",
+      "params": {
+        "emitterType": "global",
+        "gain": 1
+      }
+    }
   ],
-  "connections": [],
-  "outputs": ["osc"]
+  "connections": [
+    {
+      "from": {
+        "node": "osc"
+      },
+      "to": {
+        "node": "emit"
+      }
+    }
+  ]
 }
-

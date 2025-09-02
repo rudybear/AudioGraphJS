@@ -1,5 +1,7 @@
 {
-  "extensionsUsed": ["KHR_audio_graph"],
+  "extensionsUsed": [
+    "KHR_audio_graph"
+  ],
   "extensions": {
     "KHR_audio_graph": {
       "schemaVersion": "0.1",
@@ -7,11 +9,55 @@
         {
           "name": "channel-mixer",
           "nodes": [
-            { "label": "osc", "kind": "source", "params": { "data": { "oscillator": { "type": 0, "frequency": 440 } }, "when": 0, "duration": 1000 } },
-            { "label": "mix", "kind": "channelmixer", "params": { "outputChannels": 2, "channelInterpretation": "speakers" } }
+            {
+              "label": "osc",
+              "kind": "source",
+              "params": {
+                "data": {
+                  "oscillator": {
+                    "type": 0,
+                    "frequency": 440
+                  }
+                },
+                "when": 0,
+                "duration": 1000
+              }
+            },
+            {
+              "label": "mix",
+              "kind": "channelmixer",
+              "params": {
+                "outputChannels": 2,
+                "channelInterpretation": "speakers"
+              }
+            },
+            {
+              "label": "emit",
+              "kind": "emitter",
+              "params": {
+                "emitterType": "global",
+                "gain": 1
+              }
+            }
           ],
-          "connections": [ { "from": { "node": 0 }, "to": { "node": 1 } } ],
-          "outputs": [1]
+          "connections": [
+            {
+              "from": {
+                "node": 0
+              },
+              "to": {
+                "node": 1
+              }
+            },
+            {
+              "from": {
+                "node": 1
+              },
+              "to": {
+                "node": 2
+              }
+            }
+          ]
         }
       ]
     }

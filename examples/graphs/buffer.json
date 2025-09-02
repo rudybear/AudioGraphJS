@@ -1,8 +1,29 @@
 {
   "nodes": [
-    { "id": "noise", "kind": "audio-buffer-source", "params": { "startTime": 0 } }
+    {
+      "id": "noise",
+      "kind": "audio-buffer-source",
+      "params": {
+        "startTime": 0
+      }
+    },
+    {
+      "id": "emit",
+      "kind": "emitter",
+      "params": {
+        "emitterType": "global",
+        "gain": 1
+      }
+    }
   ],
-  "connections": [],
-  "outputs": ["noise"]
+  "connections": [
+    {
+      "from": {
+        "node": "noise"
+      },
+      "to": {
+        "node": "emit"
+      }
+    }
+  ]
 }
-

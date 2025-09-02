@@ -1,13 +1,61 @@
 {
   "nodes": [
-    { "id": "oscA", "kind": "oscillator", "params": { "type": "sine", "frequency": 440, "startTime": 0 } },
-    { "id": "oscB", "kind": "oscillator", "params": { "type": "sine", "frequency": 660, "startTime": 0 } },
-    { "id": "mix", "kind": "audio-mixer", "params": {} }
+    {
+      "id": "oscA",
+      "kind": "oscillator",
+      "params": {
+        "type": "sine",
+        "frequency": 440,
+        "startTime": 0
+      }
+    },
+    {
+      "id": "oscB",
+      "kind": "oscillator",
+      "params": {
+        "type": "sine",
+        "frequency": 660,
+        "startTime": 0
+      }
+    },
+    {
+      "id": "mix",
+      "kind": "audio-mixer",
+      "params": {}
+    },
+    {
+      "id": "emit",
+      "kind": "emitter",
+      "params": {
+        "emitterType": "global",
+        "gain": 1
+      }
+    }
   ],
   "connections": [
-    { "from": { "node": "oscA" }, "to": { "node": "mix" } },
-    { "from": { "node": "oscB" }, "to": { "node": "mix" } }
-  ],
-  "outputs": ["mix"]
+    {
+      "from": {
+        "node": "oscA"
+      },
+      "to": {
+        "node": "mix"
+      }
+    },
+    {
+      "from": {
+        "node": "oscB"
+      },
+      "to": {
+        "node": "mix"
+      }
+    },
+    {
+      "from": {
+        "node": "mix"
+      },
+      "to": {
+        "node": "emit"
+      }
+    }
+  ]
 }
-

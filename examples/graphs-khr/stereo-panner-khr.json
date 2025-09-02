@@ -1,5 +1,7 @@
 {
-  "extensionsUsed": ["KHR_audio_graph"],
+  "extensionsUsed": [
+    "KHR_audio_graph"
+  ],
   "extensions": {
     "KHR_audio_graph": {
       "schemaVersion": "0.1",
@@ -7,20 +9,107 @@
         {
           "name": "stereo-panner-approx",
           "nodes": [
-            { "label": "osc", "kind": "source", "params": { "data": { "oscillator": { "type": 0, "frequency": 330 } }, "when": 0, "duration": 1000 } },
-            { "label": "split", "kind": "splitter", "params": {} },
-            { "label": "lGain", "kind": "gain", "params": { "gain": 0.9499 } },
-            { "label": "rGain", "kind": "gain", "params": { "gain": 0.3162 } },
-            { "label": "merge", "kind": "channelmerger", "params": {} }
+            {
+              "label": "osc",
+              "kind": "source",
+              "params": {
+                "data": {
+                  "oscillator": {
+                    "type": 0,
+                    "frequency": 330
+                  }
+                },
+                "when": 0,
+                "duration": 1000
+              }
+            },
+            {
+              "label": "split",
+              "kind": "splitter",
+              "params": {}
+            },
+            {
+              "label": "lGain",
+              "kind": "gain",
+              "params": {
+                "gain": 0.9499
+              }
+            },
+            {
+              "label": "rGain",
+              "kind": "gain",
+              "params": {
+                "gain": 0.3162
+              }
+            },
+            {
+              "label": "merge",
+              "kind": "channelmerger",
+              "params": {}
+            },
+            {
+              "label": "emit",
+              "kind": "emitter",
+              "params": {
+                "emitterType": "global",
+                "gain": 1
+              }
+            }
           ],
           "connections": [
-            { "from": { "node": 0 }, "to": { "node": 1 } },
-            { "from": { "node": 1, "output": 0 }, "to": { "node": 2 } },
-            { "from": { "node": 1, "output": 1 }, "to": { "node": 3 } },
-            { "from": { "node": 2 }, "to": { "node": 4, "input": 0 } },
-            { "from": { "node": 3 }, "to": { "node": 4, "input": 1 } }
-          ],
-          "outputs": [4]
+            {
+              "from": {
+                "node": 0
+              },
+              "to": {
+                "node": 1
+              }
+            },
+            {
+              "from": {
+                "node": 1,
+                "output": 0
+              },
+              "to": {
+                "node": 2
+              }
+            },
+            {
+              "from": {
+                "node": 1,
+                "output": 1
+              },
+              "to": {
+                "node": 3
+              }
+            },
+            {
+              "from": {
+                "node": 2
+              },
+              "to": {
+                "node": 4,
+                "input": 0
+              }
+            },
+            {
+              "from": {
+                "node": 3
+              },
+              "to": {
+                "node": 4,
+                "input": 1
+              }
+            },
+            {
+              "from": {
+                "node": 4
+              },
+              "to": {
+                "node": 5
+              }
+            }
+          ]
         }
       ]
     }

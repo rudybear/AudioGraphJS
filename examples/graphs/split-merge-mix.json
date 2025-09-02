@@ -1,21 +1,135 @@
 {
   "nodes": [
-    { "id": "src", "kind": "oscillator", "params": { "type": "sine", "frequency": 220, "startTime": 0 } },
-    { "id": "split", "kind": "channel-splitter", "params": { "numberOfOutputs": 2 } },
-    { "id": "lp", "kind": "biquad-filter", "params": { "type": "lowpass", "frequency": 800, "Q": 0.707 } },
-    { "id": "hp", "kind": "biquad-filter", "params": { "type": "highpass", "frequency": 1200, "Q": 0.707 } },
-    { "id": "merge", "kind": "channel-merger", "params": { "numberOfInputs": 2 } },
-    { "id": "mix", "kind": "audio-mixer", "params": {} },
-    { "id": "out", "kind": "gain", "params": { "gain": 0.8 } }
+    {
+      "id": "src",
+      "kind": "oscillator",
+      "params": {
+        "type": "sine",
+        "frequency": 220,
+        "startTime": 0
+      }
+    },
+    {
+      "id": "split",
+      "kind": "channel-splitter",
+      "params": {
+        "numberOfOutputs": 2
+      }
+    },
+    {
+      "id": "lp",
+      "kind": "biquad-filter",
+      "params": {
+        "type": "lowpass",
+        "frequency": 800,
+        "Q": 0.707
+      }
+    },
+    {
+      "id": "hp",
+      "kind": "biquad-filter",
+      "params": {
+        "type": "highpass",
+        "frequency": 1200,
+        "Q": 0.707
+      }
+    },
+    {
+      "id": "merge",
+      "kind": "channel-merger",
+      "params": {
+        "numberOfInputs": 2
+      }
+    },
+    {
+      "id": "mix",
+      "kind": "audio-mixer",
+      "params": {}
+    },
+    {
+      "id": "out",
+      "kind": "gain",
+      "params": {
+        "gain": 0.8
+      }
+    },
+    {
+      "id": "emit",
+      "kind": "emitter",
+      "params": {
+        "emitterType": "global",
+        "gain": 1
+      }
+    }
   ],
   "connections": [
-    { "from": { "node": "src" }, "to": { "node": "split" } },
-    { "from": { "node": "split", "output": 0 }, "to": { "node": "lp" } },
-    { "from": { "node": "lp" }, "to": { "node": "merge", "input": 0 } },
-    { "from": { "node": "split", "output": 1 }, "to": { "node": "hp" } },
-    { "from": { "node": "hp" }, "to": { "node": "merge", "input": 1 } },
-    { "from": { "node": "merge" }, "to": { "node": "mix" } },
-    { "from": { "node": "mix" }, "to": { "node": "out" } }
-  ],
-  "outputs": ["out"]
+    {
+      "from": {
+        "node": "src"
+      },
+      "to": {
+        "node": "split"
+      }
+    },
+    {
+      "from": {
+        "node": "split",
+        "output": 0
+      },
+      "to": {
+        "node": "lp"
+      }
+    },
+    {
+      "from": {
+        "node": "lp"
+      },
+      "to": {
+        "node": "merge",
+        "input": 0
+      }
+    },
+    {
+      "from": {
+        "node": "split",
+        "output": 1
+      },
+      "to": {
+        "node": "hp"
+      }
+    },
+    {
+      "from": {
+        "node": "hp"
+      },
+      "to": {
+        "node": "merge",
+        "input": 1
+      }
+    },
+    {
+      "from": {
+        "node": "merge"
+      },
+      "to": {
+        "node": "mix"
+      }
+    },
+    {
+      "from": {
+        "node": "mix"
+      },
+      "to": {
+        "node": "out"
+      }
+    },
+    {
+      "from": {
+        "node": "out"
+      },
+      "to": {
+        "node": "emit"
+      }
+    }
+  ]
 }

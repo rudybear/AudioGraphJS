@@ -9,6 +9,7 @@ Biquad[lp].Q.setValueAtTime(0.700, 0)
 wrapBypass(dry=0, wet=1)
 createGain id=amp
 Gain[amp].gain.setValueAtTime(0.300, 0)
+createEmitter id=emit -> connect(emitter.output, destination)
 connect osc -> lp
 connect lp -> amp
-connect output sink amp -> destination
+connect amp -> emit

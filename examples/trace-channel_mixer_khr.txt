@@ -5,5 +5,6 @@ Oscillator[osc].start(0)
 createChannelMixer id=mix
 ChannelMixer[mix].channelCount=2
 ChannelMixer[mix].channelInterpretation=speakers
+createEmitter id=emit -> connect(emitter.output, destination)
 connect osc -> mix
-connect output sink mix -> destination
+connect mix -> emit

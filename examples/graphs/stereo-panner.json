@@ -1,18 +1,103 @@
 {
   "nodes": [
-    { "id": "osc", "kind": "oscillator", "params": { "type": "sine", "frequency": 330, "startTime": 0 } },
-    { "id": "split", "kind": "channel-splitter", "params": { "numberOfOutputs": 2 } },
-    { "id": "lGain", "kind": "gain", "params": { "gain": 0.9499 } },
-    { "id": "rGain", "kind": "gain", "params": { "gain": 0.3162 } },
-    { "id": "merge", "kind": "channel-merger", "params": { "numberOfInputs": 2 } }
+    {
+      "id": "osc",
+      "kind": "oscillator",
+      "params": {
+        "type": "sine",
+        "frequency": 330,
+        "startTime": 0
+      }
+    },
+    {
+      "id": "split",
+      "kind": "channel-splitter",
+      "params": {
+        "numberOfOutputs": 2
+      }
+    },
+    {
+      "id": "lGain",
+      "kind": "gain",
+      "params": {
+        "gain": 0.9499
+      }
+    },
+    {
+      "id": "rGain",
+      "kind": "gain",
+      "params": {
+        "gain": 0.3162
+      }
+    },
+    {
+      "id": "merge",
+      "kind": "channel-merger",
+      "params": {
+        "numberOfInputs": 2
+      }
+    },
+    {
+      "id": "emit",
+      "kind": "emitter",
+      "params": {
+        "emitterType": "global",
+        "gain": 1
+      }
+    }
   ],
   "connections": [
-    { "from": { "node": "osc" }, "to": { "node": "split" } },
-    { "from": { "node": "split", "output": 0 }, "to": { "node": "lGain" } },
-    { "from": { "node": "split", "output": 1 }, "to": { "node": "rGain" } },
-    { "from": { "node": "lGain" }, "to": { "node": "merge", "input": 0 } },
-    { "from": { "node": "rGain" }, "to": { "node": "merge", "input": 1 } }
-  ],
-  "outputs": ["merge"]
+    {
+      "from": {
+        "node": "osc"
+      },
+      "to": {
+        "node": "split"
+      }
+    },
+    {
+      "from": {
+        "node": "split",
+        "output": 0
+      },
+      "to": {
+        "node": "lGain"
+      }
+    },
+    {
+      "from": {
+        "node": "split",
+        "output": 1
+      },
+      "to": {
+        "node": "rGain"
+      }
+    },
+    {
+      "from": {
+        "node": "lGain"
+      },
+      "to": {
+        "node": "merge",
+        "input": 0
+      }
+    },
+    {
+      "from": {
+        "node": "rGain"
+      },
+      "to": {
+        "node": "merge",
+        "input": 1
+      }
+    },
+    {
+      "from": {
+        "node": "merge"
+      },
+      "to": {
+        "node": "emit"
+      }
+    }
+  ]
 }
-

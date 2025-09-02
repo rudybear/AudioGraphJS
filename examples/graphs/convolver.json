@@ -1,9 +1,46 @@
 {
   "nodes": [
-    { "id": "osc", "kind": "oscillator", "params": { "type": "sine", "frequency": 330, "startTime": 0 } },
-    { "id": "conv", "kind": "convolver", "params": { "normalize": true } }
+    {
+      "id": "osc",
+      "kind": "oscillator",
+      "params": {
+        "type": "sine",
+        "frequency": 330,
+        "startTime": 0
+      }
+    },
+    {
+      "id": "conv",
+      "kind": "convolver",
+      "params": {
+        "normalize": true
+      }
+    },
+    {
+      "id": "emit",
+      "kind": "emitter",
+      "params": {
+        "emitterType": "global",
+        "gain": 1
+      }
+    }
   ],
-  "connections": [ { "from": { "node": "osc" }, "to": { "node": "conv" } } ],
-  "outputs": ["conv"]
+  "connections": [
+    {
+      "from": {
+        "node": "osc"
+      },
+      "to": {
+        "node": "conv"
+      }
+    },
+    {
+      "from": {
+        "node": "conv"
+      },
+      "to": {
+        "node": "emit"
+      }
+    }
+  ]
 }
-

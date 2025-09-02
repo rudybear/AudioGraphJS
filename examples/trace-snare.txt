@@ -19,10 +19,11 @@ Oscillator[tone].start(0)
 createGain id=toneGain
 Gain[toneGain].gain.setValueAtTime(0.800, 0)
 createAudioMixer id=mix
+createEmitter id=emit -> connect(emitter.output, destination)
 connect noise -> hpf
 connect hpf -> bpf
 connect bpf -> noiseGain
 connect noiseGain -> mix
 connect tone -> toneGain
 connect toneGain -> mix
-connect output sink mix -> destination
+connect mix -> emit

@@ -7,6 +7,7 @@ Oscillator[oscB].type=sine
 Oscillator[oscB].frequency.setValueAtTime(660, 0)
 Oscillator[oscB].start(0)
 createAudioMixer id=mix
+createEmitter id=emit -> connect(emitter.output, destination)
 connect oscA -> mix
 connect oscB -> mix
-connect output sink mix -> destination
+connect mix -> emit

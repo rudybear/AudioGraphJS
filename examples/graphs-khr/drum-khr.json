@@ -1,5 +1,7 @@
 {
-  "extensionsUsed": ["KHR_audio_graph"],
+  "extensionsUsed": [
+    "KHR_audio_graph"
+  ],
   "extensions": {
     "KHR_audio_graph": {
       "schemaVersion": "0.1",
@@ -7,22 +9,106 @@
         {
           "name": "drum",
           "nodes": [
-            { "label": "bodyOsc", "kind": "source", "params": { "data": { "oscillator": { "type": 0, "frequency": 150 } }, "when": 0, "duration": 1000 } },
-            { "label": "bodyGain", "kind": "gain", "params": { "gain": 1.0 } },
-            { "label": "clickOsc", "kind": "source", "params": { "data": { "oscillator": { "type": 0, "frequency": 2000 } }, "when": 0, "duration": 1000 } },
-            { "label": "clickGain", "kind": "gain", "params": { "gain": 0.5 } },
-            { "label": "mix", "kind": "audiomixer", "params": {} }
+            {
+              "label": "bodyOsc",
+              "kind": "source",
+              "params": {
+                "data": {
+                  "oscillator": {
+                    "type": 0,
+                    "frequency": 150
+                  }
+                },
+                "when": 0,
+                "duration": 1000
+              }
+            },
+            {
+              "label": "bodyGain",
+              "kind": "gain",
+              "params": {
+                "gain": 1
+              }
+            },
+            {
+              "label": "clickOsc",
+              "kind": "source",
+              "params": {
+                "data": {
+                  "oscillator": {
+                    "type": 0,
+                    "frequency": 2000
+                  }
+                },
+                "when": 0,
+                "duration": 1000
+              }
+            },
+            {
+              "label": "clickGain",
+              "kind": "gain",
+              "params": {
+                "gain": 0.5
+              }
+            },
+            {
+              "label": "mix",
+              "kind": "audiomixer",
+              "params": {}
+            },
+            {
+              "label": "emit",
+              "kind": "emitter",
+              "params": {
+                "emitterType": "global",
+                "gain": 1
+              }
+            }
           ],
           "connections": [
-            { "from": { "node": 0 }, "to": { "node": 1 } },
-            { "from": { "node": 1 }, "to": { "node": 4 } },
-            { "from": { "node": 2 }, "to": { "node": 3 } },
-            { "from": { "node": 3 }, "to": { "node": 4 } }
-          ],
-          "outputs": [4]
+            {
+              "from": {
+                "node": 0
+              },
+              "to": {
+                "node": 1
+              }
+            },
+            {
+              "from": {
+                "node": 1
+              },
+              "to": {
+                "node": 4
+              }
+            },
+            {
+              "from": {
+                "node": 2
+              },
+              "to": {
+                "node": 3
+              }
+            },
+            {
+              "from": {
+                "node": 3
+              },
+              "to": {
+                "node": 4
+              }
+            },
+            {
+              "from": {
+                "node": 4
+              },
+              "to": {
+                "node": 5
+              }
+            }
+          ]
         }
       ]
     }
   }
 }
-

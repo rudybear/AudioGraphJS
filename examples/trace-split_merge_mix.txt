@@ -17,6 +17,7 @@ createChannelMerger id=merge
 createAudioMixer id=mix
 createGain id=out
 Gain[out].gain.setValueAtTime(0.800, 0)
+createEmitter id=emit -> connect(emitter.output, destination)
 connect src -> split
 connect split[out 0] -> lp
 connect lp -> merge[in 0]
@@ -24,4 +25,4 @@ connect split[out 1] -> hp
 connect hp -> merge[in 1]
 connect merge -> mix
 connect mix -> out
-connect output sink out -> destination
+connect out -> emit

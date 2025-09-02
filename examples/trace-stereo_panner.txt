@@ -8,9 +8,10 @@ Gain[lGain].gain.setValueAtTime(0.950, 0)
 createGain id=rGain
 Gain[rGain].gain.setValueAtTime(0.316, 0)
 createChannelMerger id=merge
+createEmitter id=emit -> connect(emitter.output, destination)
 connect osc -> split
 connect split[out 0] -> lGain
 connect split[out 1] -> rGain
 connect lGain -> merge[in 0]
 connect rGain -> merge[in 1]
-connect output sink merge -> destination
+connect merge -> emit
