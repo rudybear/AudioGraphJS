@@ -37,7 +37,7 @@ Date: 2025‑09‑01
   - Validates `extensions.KHR_audio_graph` in glTF files and runs lints (DAG, sinks, degrees/arity).
 - Comparator: `examples/compare-khr-runtime.mjs`
   - Runs matched pairs from `examples/graphs/*.json` vs `examples/graphs-khr/*-khr.json`, diffs traces (top 20 lines of diffs).
-  - Strict mode (`--strict-wav` or `STRICT_WAV=1`) compares WAV checksums and skips noise‑synth graphs.
+  - Strict mode (`--strict-wav` or `STRICT_WAV=1`) compares WAV checksums; noise is generated deterministically via seeded PRNG. Currently skips only the complex `seven-nation-army` pair.
 
 ## Examples (Aligned Pairs)
 - Core
@@ -50,6 +50,11 @@ Date: 2025‑09‑01
 ## Sinks Preference
 - Adopted global emitter sinks for parity and clarity. Graphs with a single `outputs[]` entry were migrated to a global emitter (emitterType `global`), preserving connectivity.
 - Helper: `tools/update-emitters.mjs` automates this migration for both runtime and KHR graphs.
+
+## Stereo Panner Approximation
+- KHR lacks a native stereo panner. We approximate equal‑power panning via split → gains → merge.
+- Coefficients for pan x ∈ [-1, 1]: L = cos((x+1)π/4), R = sin((x+1)π/4).
+- See examples: `stereo-panner.json` and `stereo-panner-khr.json`.
 
 ## Musical Preset Automation (Runner)
 - drum: body/click envelopes and sweeps.

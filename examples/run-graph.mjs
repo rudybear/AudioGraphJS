@@ -87,7 +87,7 @@ function mapNodeKind(specKind, params) {
   }
 }
 
-function mapKHRToRuntime(extRoot, graph) {
+function mapKHRToRuntime(extRoot, graph, seedBase) {
   const nodes = [];
   const idByIndex = [];
   for (const n of graph.nodes || []) {
@@ -103,7 +103,7 @@ function mapKHRToRuntime(extRoot, graph) {
           const parts = uri.split(':');
           const seconds = parts[1] ? parseFloat(parts[1]) : 1.0;
           const amp = parts[2] ? parseFloat(parts[2]) : 0.7;
-          uri = makeNoiseDataUri({ seconds, amp });
+          uri = makeNoiseDataUri({ seconds, amp, seedBase: `${seedBase}:noise` });
         }
         mapped.params = { ...(mapped.params || {}), uri };
       }
@@ -146,11 +146,15 @@ function writeWavPCM16LE({ samples, sampleRate, numChannels }) {
   for (let i = 0; i < samples.length; i++) buffer.writeInt16LE(floatTo16BitPCM(samples[i]), 44 + i * 2);
   return buffer;
 }
-function makeNoiseDataUri({ seconds = 0.35, sampleRate = 48000, amp = 0.7 }) {
+// Deterministic noise generator with seed
+function mulberry32(seed) { let t = seed >>> 0; return function () { t += 0x6D2B79F5; let r = Math.imul(t ^ (t >>> 15), 1 | t); r ^= r + Math.imul(r ^ (r >>> 7), 61 | r); return ((r ^ (r >>> 14)) >>> 0) / 4294967296; }; }
+function hashString(s) { let h = 2166136261 >>> 0; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+function makeNoiseDataUri({ seconds = 0.35, sampleRate = 48000, amp = 0.7, seedBase = '' }) {
   const length = Math.floor(sampleRate * seconds);
   const numChannels = 1;
+  const rng = mulberry32(hashString(seedBase));
   const samples = new Float32Array(length);
-  for (let i = 0; i < length; i++) samples[i] = (Math.random() * 2 - 1) * amp;
+  for (let i = 0; i < length; i++) samples[i] = (rng() * 2 - 1) * amp;
   const wav = writeWavPCM16LE({ samples, sampleRate, numChannels });
   return `data:audio/wav;base64,${Buffer.from(wav).toString('base64')}`;
 }
@@ -185,7 +189,16 @@ async function main() {
     const outWav = path.join(__dirname, `output-${base}.wav`);
     const outTrace = path.join(__dirname, `trace-${base}.txt`);
     const json = readJson(abs);
-    let spec = asRuntimeSpec(json);
+    let spec;
+    if (Array.isArray(json?.nodes) && Array.isArray(json?.connections)) {
+      spec = json;
+    } else if (json?.extensions?.KHR_audio_graph) {
+      const ext = json.extensions.KHR_audio_graph;
+      const seedBase = base.replace(/_khr$/, '');
+      spec = mapKHRToRuntime(ext, ext.graphs[0], seedBase);
+    } else {
+      throw new Error('Unsupported input JSON: expected runtime GraphSpec or KHR container');
+    }
     // For runtime GraphSpec without IR on convolver, synthesize an IR so traces align with KHR mapping
     if (Array.isArray(spec.nodes)) {
       for (const n of spec.nodes) {
@@ -198,9 +211,9 @@ async function main() {
           const p = (n.params ||= {});
           if (!('buffer' in p) && !('uri' in p)) {
             const key = path.basename(abs).toLowerCase();
-            if (key.includes('snare') || key.includes('drum-party')) { p.uri = makeNoiseDataUri({ seconds: 0.35, amp: 0.7 }); p.duration = key.includes('drum-party') ? 0.2 : 0.35; }
-            if (key.includes('cymbal')) { p.uri = makeNoiseDataUri({ seconds: 2.0, amp: 0.5 }); p.duration = 2.0; }
-            if (key.includes('buffer')) { p.uri = makeNoiseDataUri({ seconds: 1.0, amp: 0.6 }); p.duration = 1.0; }
+            if (key.includes('snare') || key.includes('drum-party')) { p.uri = makeNoiseDataUri({ seconds: 0.35, amp: 0.7, seedBase: base + ':noise' }); p.duration = key.includes('drum-party') ? 0.2 : 0.35; }
+            if (key.includes('cymbal')) { p.uri = makeNoiseDataUri({ seconds: 2.0, amp: 0.5, seedBase: base + ':noise' }); p.duration = 2.0; }
+            if (key.includes('buffer')) { p.uri = makeNoiseDataUri({ seconds: 1.0, amp: 0.6, seedBase: base + ':noise' }); p.duration = 1.0; }
           }
         }
       }

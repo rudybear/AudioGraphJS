@@ -11,6 +11,7 @@
 
 - Time Units
   - Runtime node params use seconds for Web Audio API calls. When consuming KHR_audio_graph (ms), convert ms→s. See `examples/parse-gltf.mjs` for a mapper.
+  - Deterministic noise: the runner synthesizes noise using a seeded PRNG derived from the file name (seedBase). KHR `audioData` may use `GENERATE_NOISE:seconds:amp` which the runner maps to a deterministic data URI, ensuring strict WAV comparisons when desired.
 
 - Linting
   - Import `lintGraph` from the runtime and validate graphs before building:
@@ -29,4 +30,12 @@
 
 - Comparator strict mode
   - Compare KHR vs runtime pairs (traces only): `npm run example:compare-khr`
-  - Strict WAV checksum (skips noise‑synth graphs): `npm run example:compare-khr:strict`
+  - Strict WAV checksum: `npm run example:compare-khr:strict` (skips only complex `seven-nation-army` for now).
+
+## Stereo Panner Approximation
+- KHR currently has no native `stereo-panner` node. For parity, we approximate equal‑power panning using:
+  - Split mono -> two gains -> merge to stereo.
+  - For pan `x` in [-1, 1]:
+    - Left gain `L = cos((x + 1) * π / 4)`
+    - Right gain `R = sin((x + 1) * π / 4)`
+- See `examples/graphs/stereo-panner.json` and `examples/graphs-khr/stereo-panner-khr.json`.
