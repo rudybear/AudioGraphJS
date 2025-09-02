@@ -1,0 +1,34 @@
+createBufferSource id=noise (uri)
+AudioBufferSource[noise].start(0, duration=2)
+AudioBufferSource[noise].buffer <- uri(data:audio/wav;base64,UklGRiTuAgBXQVZFZm10IBAAAAABAAEAgLsAAAB3AQ…)
+createBiquadFilter id=hp
+Biquad[hp].type=highpass
+Biquad[hp].frequency.setValueAtTime(8000, 0)
+Biquad[hp].Q.setValueAtTime(0.707, 0)
+wrapBypass(dry=0, wet=1)
+createBiquadFilter id=peak1
+Biquad[peak1].type=peaking
+Biquad[peak1].frequency.setValueAtTime(10000, 0)
+Biquad[peak1].Q.setValueAtTime(5, 0)
+Biquad[peak1].gain.setValueAtTime(6, 0)
+wrapBypass(dry=0, wet=1)
+createBiquadFilter id=peak2
+Biquad[peak2].type=peaking
+Biquad[peak2].frequency.setValueAtTime(12000, 0)
+Biquad[peak2].Q.setValueAtTime(6, 0)
+Biquad[peak2].gain.setValueAtTime(4, 0)
+wrapBypass(dry=0, wet=1)
+createBiquadFilter id=peak3
+Biquad[peak3].type=peaking
+Biquad[peak3].frequency.setValueAtTime(7000, 0)
+Biquad[peak3].Q.setValueAtTime(3, 0)
+Biquad[peak3].gain.setValueAtTime(3, 0)
+wrapBypass(dry=0, wet=1)
+createGain id=gainEnv
+Gain[gainEnv].gain.setValueAtTime(1, 0)
+connect noise -> hp
+connect hp -> peak1
+connect peak1 -> peak2
+connect peak2 -> peak3
+connect peak3 -> gainEnv
+connect output sink gainEnv -> destination

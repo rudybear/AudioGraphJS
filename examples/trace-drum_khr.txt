@@ -1,0 +1,18 @@
+createOscillator id=bodyOsc
+Oscillator[bodyOsc].type=sine
+Oscillator[bodyOsc].frequency.setValueAtTime(150, 0)
+Oscillator[bodyOsc].start(0)
+createGain id=bodyGain
+Gain[bodyGain].gain.setValueAtTime(1, 0)
+createOscillator id=clickOsc
+Oscillator[clickOsc].type=sine
+Oscillator[clickOsc].frequency.setValueAtTime(2000, 0)
+Oscillator[clickOsc].start(0)
+createGain id=clickGain
+Gain[clickGain].gain.setValueAtTime(0.500, 0)
+createAudioMixer id=mix
+connect bodyOsc -> bodyGain
+connect bodyGain -> mix
+connect clickOsc -> clickGain
+connect clickGain -> mix
+connect output sink mix -> destination

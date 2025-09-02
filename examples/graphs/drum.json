@@ -1,0 +1,17 @@
+{
+  "nodes": [
+    { "id": "bodyOsc", "kind": "oscillator", "params": { "type": "sine", "frequency": 150, "startTime": 0 } },
+    { "id": "bodyGain", "kind": "gain", "params": { "gain": 1.0 } },
+    { "id": "clickOsc", "kind": "oscillator", "params": { "type": "sine", "frequency": 2000, "startTime": 0 } },
+    { "id": "clickGain", "kind": "gain", "params": { "gain": 0.5 } },
+    { "id": "mix", "kind": "audio-mixer", "params": {} }
+  ],
+  "connections": [
+    { "from": { "node": "bodyOsc" }, "to": { "node": "bodyGain" } },
+    { "from": { "node": "bodyGain" }, "to": { "node": "mix" } },
+    { "from": { "node": "clickOsc" }, "to": { "node": "clickGain" } },
+    { "from": { "node": "clickGain" }, "to": { "node": "mix" } }
+  ],
+  "outputs": ["mix"]
+}
+

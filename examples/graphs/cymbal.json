@@ -1,0 +1,19 @@
+{
+  "nodes": [
+    { "id": "noise", "kind": "audio-buffer-source", "params": { "startTime": 0 } },
+    { "id": "hp", "kind": "biquad-filter", "params": { "type": "highpass", "frequency": 8000, "Q": 0.707 } },
+    { "id": "peak1", "kind": "biquad-filter", "params": { "type": "peaking", "frequency": 10000, "Q": 5, "gain": 6 } },
+    { "id": "peak2", "kind": "biquad-filter", "params": { "type": "peaking", "frequency": 12000, "Q": 6, "gain": 4 } },
+    { "id": "peak3", "kind": "biquad-filter", "params": { "type": "peaking", "frequency": 7000, "Q": 3, "gain": 3 } },
+    { "id": "gainEnv", "kind": "gain", "params": { "gain": 1.0 } }
+  ],
+  "connections": [
+    { "from": { "node": "noise" }, "to": { "node": "hp" } },
+    { "from": { "node": "hp" }, "to": { "node": "peak1" } },
+    { "from": { "node": "peak1" }, "to": { "node": "peak2" } },
+    { "from": { "node": "peak2" }, "to": { "node": "peak3" } },
+    { "from": { "node": "peak3" }, "to": { "node": "gainEnv" } }
+  ],
+  "outputs": ["gainEnv"]
+}
+

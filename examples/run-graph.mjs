@@ -93,6 +93,13 @@ function mapKHRToRuntime(extRoot, graph) {
   for (const n of graph.nodes || []) {
     const mapped = mapNodeKind(n.kind || n.type || n.nodetype || n.name || 'unknown', n.params || n);
     const id = (n.label && typeof n.label === 'string') ? n.label : String(nodes.length);
+    // If KHR source references audioData, map to runtime buffer uri
+    if (n.kind === 'source' && n.params && typeof n.params.data?.audioData === 'number' && Array.isArray(extRoot.audioData)) {
+      const entry = extRoot.audioData[n.params.data.audioData];
+      if (entry && typeof entry.uri === 'string') {
+        mapped.params = { ...(mapped.params || {}), uri: entry.uri };
+      }
+    }
     // If KHR reverb provides an impulse reference, map to convolver uri; else synthesize a small IR
     if ((n.kind === 'reverb' || n.kind === 'convolver') && mapped.kind === 'convolver') {
       const p = mapped.params || {};
@@ -130,6 +137,14 @@ function writeWavPCM16LE({ samples, sampleRate, numChannels }) {
   buffer.writeUInt32LE(byteRate, o); o += 4; buffer.writeUInt16LE(blockAlign, o); o += 2; buffer.writeUInt16LE(16, o); o += 2; buffer.write('data', o); o += 4; buffer.writeUInt32LE(dataSize, o); o += 4;
   for (let i = 0; i < samples.length; i++) buffer.writeInt16LE(floatTo16BitPCM(samples[i]), 44 + i * 2);
   return buffer;
+}
+function makeNoiseDataUri({ seconds = 0.35, sampleRate = 48000, amp = 0.7 }) {
+  const length = Math.floor(sampleRate * seconds);
+  const numChannels = 1;
+  const samples = new Float32Array(length);
+  for (let i = 0; i < length; i++) samples[i] = (Math.random() * 2 - 1) * amp;
+  const wav = writeWavPCM16LE({ samples, sampleRate, numChannels });
+  return `data:audio/wav;base64,${Buffer.from(wav).toString('base64')}`;
 }
 function makeIRDataUri({ seconds = 0.4, sampleRate = 48000, decay = 3 }) {
   const length = Math.floor(sampleRate * seconds);
@@ -170,6 +185,15 @@ async function main() {
           const p = (n.params ||= {});
           if (!('uri' in p)) p.uri = makeIRDataUri({ seconds: 0.4 });
         }
+        // For musical presets, synthesize noise for audio-buffer-source nodes to align with KHR mapping
+        if (n.kind === 'audio-buffer-source') {
+          const p = (n.params ||= {});
+          if (!('buffer' in p) && !('uri' in p)) {
+            const key = path.basename(abs).toLowerCase();
+            if (key.includes('snare')) { p.uri = makeNoiseDataUri({ seconds: 0.35, amp: 0.7 }); p.duration = 0.35; }
+            if (key.includes('cymbal')) { p.uri = makeNoiseDataUri({ seconds: 2.0, amp: 0.5 }); p.duration = 2.0; }
+          }
+        }
       }
     }
     const { errors } = lintGraph(spec);
@@ -178,6 +202,41 @@ async function main() {
     const ctx = new OfflineAudioContext(2, sr * 2, sr);
     const trace = createMemoryTrace();
     const built = await buildGraphAsync(ctx, spec, trace);
+    // Apply preset automation for musical samples
+    {
+      const nameKey = path.basename(abs).toLowerCase();
+      if (nameKey.includes('drum')) {
+        const bodyOsc = built.nodes.get('bodyOsc');
+        const clickOsc = built.nodes.get('clickOsc');
+        const bodyGain = built.nodes.get('bodyGain');
+        const clickGain = built.nodes.get('clickGain');
+        const t0 = 0;
+        bodyOsc?.frequency.setValueAtTime?.(150, t0);
+        (bodyOsc?.frequency.exponentialRampToValueAtTime ? bodyOsc.frequency.exponentialRampToValueAtTime.bind(bodyOsc.frequency) : bodyOsc?.frequency.linearRampToValueAtTime?.bind(bodyOsc.frequency))?.(50, t0 + 0.15);
+        bodyGain?.gain.setValueAtTime?.(1.0, t0);
+        (bodyGain?.gain.exponentialRampToValueAtTime ? bodyGain.gain.exponentialRampToValueAtTime.bind(bodyGain.gain) : bodyGain?.gain.linearRampToValueAtTime?.bind(bodyGain.gain))?.(bodyGain?.gain.exponentialRampToValueAtTime ? 0.0001 : 0, t0 + 0.5);
+        clickOsc?.frequency.setValueAtTime?.(2000, t0);
+        (clickOsc?.frequency.exponentialRampToValueAtTime ? clickOsc.frequency.exponentialRampToValueAtTime.bind(clickOsc.frequency) : clickOsc?.frequency.linearRampToValueAtTime?.bind(clickOsc.frequency))?.(800, t0 + 0.02);
+        clickGain?.gain.setValueAtTime?.(0.5, t0);
+        (clickGain?.gain.exponentialRampToValueAtTime ? clickGain.gain.exponentialRampToValueAtTime.bind(clickGain.gain) : clickGain?.gain.linearRampToValueAtTime?.bind(clickGain.gain))?.(clickGain?.gain.exponentialRampToValueAtTime ? 0.0001 : 0, t0 + 0.02);
+      } else if (nameKey.includes('snare')) {
+        const tone = built.nodes.get('tone');
+        const toneGain = built.nodes.get('toneGain');
+        const noiseGain = built.nodes.get('noiseGain');
+        const t0 = 0;
+        tone?.frequency.setValueAtTime?.(220, t0);
+        (tone?.frequency.exponentialRampToValueAtTime ? tone.frequency.exponentialRampToValueAtTime.bind(tone.frequency) : tone?.frequency.linearRampToValueAtTime?.bind(tone.frequency))?.(140, t0 + 0.12);
+        toneGain?.gain.setValueAtTime?.(0.6, t0);
+        (toneGain?.gain.exponentialRampToValueAtTime ? toneGain.gain.exponentialRampToValueAtTime.bind(toneGain.gain) : toneGain?.gain.linearRampToValueAtTime?.bind(toneGain.gain))?.(toneGain?.gain.exponentialRampToValueAtTime ? 0.0001 : 0, t0 + 0.2);
+        noiseGain?.gain.setValueAtTime?.(1.0, t0);
+        (noiseGain?.gain.exponentialRampToValueAtTime ? noiseGain.gain.exponentialRampToValueAtTime.bind(noiseGain.gain) : noiseGain?.gain.linearRampToValueAtTime?.bind(noiseGain.gain))?.(noiseGain?.gain.exponentialRampToValueAtTime ? 0.0001 : 0, t0 + 0.25);
+      } else if (nameKey.includes('cymbal')) {
+        const env = built.nodes.get('gainEnv');
+        const t0 = 0;
+        env?.gain.setValueAtTime?.(1.0, t0);
+        (env?.gain.exponentialRampToValueAtTime ? env.gain.exponentialRampToValueAtTime.bind(env.gain) : env?.gain.linearRampToValueAtTime?.bind(env.gain))?.(env?.gain.exponentialRampToValueAtTime ? 0.0001 : 0, t0 + 1.8);
+      }
+    }
     const rendered = await ctx.startRendering();
     // write wav
     const length = rendered.length;

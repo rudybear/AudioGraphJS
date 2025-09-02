@@ -1,0 +1,28 @@
+createBufferSource id=noise (uri)
+AudioBufferSource[noise].start(0, duration=0.350)
+AudioBufferSource[noise].buffer <- uri(data:audio/wav;base64,UklGRmSDAABXQVZFZm10IBAAAAABAAEAgLsAAAB3AQ…)
+createBiquadFilter id=hpf
+Biquad[hpf].type=highpass
+Biquad[hpf].frequency.setValueAtTime(800, 0)
+wrapBypass(dry=0, wet=1)
+createBiquadFilter id=bpf
+Biquad[bpf].type=bandpass
+Biquad[bpf].frequency.setValueAtTime(1800, 0)
+Biquad[bpf].Q.setValueAtTime(0.800, 0)
+wrapBypass(dry=0, wet=1)
+createGain id=noiseGain
+Gain[noiseGain].gain.setValueAtTime(1, 0)
+createOscillator id=tone
+Oscillator[tone].type=sine
+Oscillator[tone].frequency.setValueAtTime(220, 0)
+Oscillator[tone].start(0)
+createGain id=toneGain
+Gain[toneGain].gain.setValueAtTime(0.800, 0)
+createAudioMixer id=mix
+connect noise -> hpf
+connect hpf -> bpf
+connect bpf -> noiseGain
+connect noiseGain -> mix
+connect tone -> toneGain
+connect toneGain -> mix
+connect output sink mix -> destination
