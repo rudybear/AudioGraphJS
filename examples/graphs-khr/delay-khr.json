@@ -1,0 +1,20 @@
+{
+  "extensionsUsed": ["KHR_audio_graph"],
+  "extensions": {
+    "KHR_audio_graph": {
+      "schemaVersion": "0.1",
+      "graphs": [
+        {
+          "name": "delay",
+          "nodes": [
+            { "kind": "source", "params": { "data": { "oscillator": { "type": 1, "frequency": 440, "pulseWidth": 0.25 } }, "when": 0, "duration": 500 } },
+            { "kind": "delay", "params": { "delayTime": 120 } }
+          ],
+          "connections": [ { "from": { "node": 0 }, "to": { "node": 1 } } ],
+          "outputs": [1]
+        }
+      ]
+    }
+  }
+}
+

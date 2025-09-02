@@ -1,0 +1,9 @@
+createOscillator id=0
+Oscillator[0].type=1
+Oscillator[0].frequency.setValueAtTime(440, 0)
+Oscillator[0].start(0)
+createDelay id=1
+Delay[1].delayTime.setValueAtTime(0.120, 0)
+wrapBypass(dry=0, wet=1)
+connect 0 -> 1
+connect output sink 1 -> destination

@@ -1,0 +1,18 @@
+createOscillator id=0
+Oscillator[0].type=1
+Oscillator[0].frequency.setValueAtTime(220, 0)
+Oscillator[0].start(0)
+createConvolver id=1
+Convolver[1].normalize=true
+wrapBypass(dry=0, wet=1)
+createGain id=2
+Gain[2].gain.setValueAtTime(0.700, 0)
+createGain id=3
+Gain[3].gain.setValueAtTime(0.300, 0)
+createAudioMixer id=4
+connect 0 -> 1
+connect 0 -> 2
+connect 1 -> 3
+connect 2 -> 4
+connect 3 -> 4
+connect output sink 4 -> destination
