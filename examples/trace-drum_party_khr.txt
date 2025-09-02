@@ -1,0 +1,23 @@
+createOscillator id=kick
+Oscillator[kick].type=sine
+Oscillator[kick].frequency.setValueAtTime(100, 0)
+Oscillator[kick].start(0)
+createGain id=kickGain
+Gain[kickGain].gain.setValueAtTime(0, 0)
+createBufferSource id=snareNoise (uri)
+AudioBufferSource[snareNoise].start(0, duration=0.200)
+AudioBufferSource[snareNoise].buffer <- uri(data:audio/wav;base64,UklGRmSDAABXQVZFZm10IBAAAAABAAEAgLsAAAB3AQ…)
+createBiquadFilter id=snareHP
+Biquad[snareHP].type=highpass
+Biquad[snareHP].frequency.setValueAtTime(800, 0)
+wrapBypass(dry=0, wet=1)
+createGain id=snareGain
+Gain[snareGain].gain.setValueAtTime(0, 0)
+createAudioMixer id=mix
+createEmitter id=emit -> connect(emitter.output, destination)
+connect kick -> kickGain
+connect kickGain -> mix
+connect snareNoise -> snareHP
+connect snareHP -> snareGain
+connect snareGain -> mix
+connect mix -> emit

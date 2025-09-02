@@ -1,0 +1,105 @@
+{
+  "nodes": [
+    {
+      "id": "kick",
+      "kind": "oscillator",
+      "params": {
+        "type": "sine",
+        "frequency": 100,
+        "startTime": 0
+      }
+    },
+    {
+      "id": "kickGain",
+      "kind": "gain",
+      "params": {
+        "gain": 0
+      }
+    },
+    {
+      "id": "snareNoise",
+      "kind": "audio-buffer-source",
+      "params": {
+        "startTime": 0
+      }
+    },
+    {
+      "id": "snareHP",
+      "kind": "biquad-filter",
+      "params": {
+        "type": "highpass",
+        "frequency": 800
+      }
+    },
+    {
+      "id": "snareGain",
+      "kind": "gain",
+      "params": {
+        "gain": 0
+      }
+    },
+    {
+      "id": "mix",
+      "kind": "audio-mixer",
+      "params": {}
+    },
+    {
+      "id": "emit",
+      "kind": "emitter",
+      "params": {
+        "emitterType": "global",
+        "gain": 1
+      }
+    }
+  ],
+  "connections": [
+    {
+      "from": {
+        "node": "kick"
+      },
+      "to": {
+        "node": "kickGain"
+      }
+    },
+    {
+      "from": {
+        "node": "kickGain"
+      },
+      "to": {
+        "node": "mix"
+      }
+    },
+    {
+      "from": {
+        "node": "snareNoise"
+      },
+      "to": {
+        "node": "snareHP"
+      }
+    },
+    {
+      "from": {
+        "node": "snareHP"
+      },
+      "to": {
+        "node": "snareGain"
+      }
+    },
+    {
+      "from": {
+        "node": "snareGain"
+      },
+      "to": {
+        "node": "mix"
+      }
+    },
+    {
+      "from": {
+        "node": "mix"
+      },
+      "to": {
+        "node": "emit"
+      }
+    }
+  ]
+}

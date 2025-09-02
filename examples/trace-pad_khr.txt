@@ -1,0 +1,26 @@
+createOscillator id=oscA
+Oscillator[oscA].type=triangle
+Oscillator[oscA].frequency.setValueAtTime(220, 0)
+Oscillator[oscA].start(0)
+createOscillator id=oscB
+Oscillator[oscB].type=triangle
+Oscillator[oscB].frequency.setValueAtTime(222, 0)
+Oscillator[oscB].start(0)
+createAudioMixer id=mix
+createBiquadFilter id=lp
+Biquad[lp].type=lowpass
+Biquad[lp].frequency.setValueAtTime(2000, 0)
+Biquad[lp].Q.setValueAtTime(0.700, 0)
+wrapBypass(dry=0, wet=1)
+createGain id=amp
+Gain[amp].gain.setValueAtTime(0, 0)
+createChannelMixer id=stereo
+ChannelMixer[stereo].channelCount=2
+ChannelMixer[stereo].channelInterpretation=speakers
+createEmitter id=emit -> connect(emitter.output, destination)
+connect oscA -> mix
+connect oscB -> mix
+connect mix -> lp
+connect lp -> amp
+connect amp -> stereo
+connect stereo -> emit

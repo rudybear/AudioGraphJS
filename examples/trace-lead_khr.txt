@@ -1,0 +1,26 @@
+createOscillator id=osc1
+Oscillator[osc1].type=sawtooth
+Oscillator[osc1].frequency.setValueAtTime(440, 0)
+Oscillator[osc1].start(0)
+createOscillator id=osc2
+Oscillator[osc2].type=sawtooth
+Oscillator[osc2].frequency.setValueAtTime(446, 0)
+Oscillator[osc2].start(0)
+createAudioMixer id=mix
+createBiquadFilter id=lp
+Biquad[lp].type=lowpass
+Biquad[lp].frequency.setValueAtTime(4000, 0)
+Biquad[lp].Q.setValueAtTime(0.700, 0)
+wrapBypass(dry=0, wet=1)
+createGain id=amp
+Gain[amp].gain.setValueAtTime(0, 0)
+createChannelMixer id=pan
+ChannelMixer[pan].channelCount=2
+ChannelMixer[pan].channelInterpretation=speakers
+createEmitter id=emit -> connect(emitter.output, destination)
+connect osc1 -> mix
+connect osc2 -> mix
+connect mix -> lp
+connect lp -> amp
+connect amp -> pan
+connect pan -> emit

@@ -1,0 +1,129 @@
+{
+  "extensionsUsed": [
+    "KHR_audio_graph"
+  ],
+  "extensions": {
+    "KHR_audio_graph": {
+      "schemaVersion": "0.1",
+      "audioData": [
+        { "uri": "GENERATE_NOISE:0.35:0.7" }
+      ],
+      "graphs": [
+        {
+          "name": "drum-party",
+          "nodes": [
+            {
+              "label": "kick",
+              "kind": "source",
+              "params": {
+                "data": {
+                  "oscillator": {
+                    "type": 0,
+                    "frequency": 100
+                  }
+                },
+                "when": 0,
+                "duration": 2000
+              }
+            },
+            {
+              "label": "kickGain",
+              "kind": "gain",
+              "params": {
+                "gain": 0
+              }
+            },
+            {
+              "label": "snareNoise",
+              "kind": "source",
+              "params": {
+                "data": {
+                  "audioData": 0
+                },
+                "when": 0,
+                "duration": 200
+              }
+            },
+            {
+              "label": "snareHP",
+              "kind": "highpass",
+              "params": {
+                "frequency": 800
+              }
+            },
+            {
+              "label": "snareGain",
+              "kind": "gain",
+              "params": {
+                "gain": 0
+              }
+            },
+            {
+              "label": "mix",
+              "kind": "audiomixer",
+              "params": {}
+            },
+            {
+              "label": "emit",
+              "kind": "emitter",
+              "params": {
+                "emitterType": "global",
+                "gain": 1
+              }
+            }
+          ],
+          "connections": [
+            {
+              "from": {
+                "node": 0
+              },
+              "to": {
+                "node": 1
+              }
+            },
+            {
+              "from": {
+                "node": 1
+              },
+              "to": {
+                "node": 5
+              }
+            },
+            {
+              "from": {
+                "node": 2
+              },
+              "to": {
+                "node": 3
+              }
+            },
+            {
+              "from": {
+                "node": 3
+              },
+              "to": {
+                "node": 4
+              }
+            },
+            {
+              "from": {
+                "node": 4
+              },
+              "to": {
+                "node": 5
+              }
+            },
+            {
+              "from": {
+                "node": 5
+              },
+              "to": {
+                "node": 6
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,146 @@
+{
+  "extensionsUsed": [
+    "KHR_audio_graph"
+  ],
+  "extensions": {
+    "KHR_audio_graph": {
+      "schemaVersion": "0.1",
+      "graphs": [
+        {
+          "name": "song",
+          "nodes": [
+            {
+              "label": "padOsc",
+              "kind": "source",
+              "params": {
+                "data": {
+                  "oscillator": {
+                    "type": 3,
+                    "frequency": 220
+                  }
+                },
+                "when": 0,
+                "duration": 4000
+              }
+            },
+            {
+              "label": "padLP",
+              "kind": "lowpass",
+              "params": {
+                "frequency": 1500,
+                "qualityFactor": 0.7
+              }
+            },
+            {
+              "label": "padAmp",
+              "kind": "gain",
+              "params": {
+                "gain": 0
+              }
+            },
+            {
+              "label": "leadOsc",
+              "kind": "source",
+              "params": {
+                "data": {
+                  "oscillator": {
+                    "type": 2,
+                    "frequency": 440
+                  }
+                },
+                "when": 0,
+                "duration": 4000
+              }
+            },
+            {
+              "label": "leadLP",
+              "kind": "lowpass",
+              "params": {
+                "frequency": 3500,
+                "qualityFactor": 0.7
+              }
+            },
+            {
+              "label": "leadAmp",
+              "kind": "gain",
+              "params": {
+                "gain": 0
+              }
+            },
+            {
+              "label": "mix",
+              "kind": "audiomixer",
+              "params": {}
+            },
+            {
+              "label": "emit",
+              "kind": "emitter",
+              "params": {
+                "emitterType": "global",
+                "gain": 1
+              }
+            }
+          ],
+          "connections": [
+            {
+              "from": {
+                "node": 0
+              },
+              "to": {
+                "node": 1
+              }
+            },
+            {
+              "from": {
+                "node": 1
+              },
+              "to": {
+                "node": 2
+              }
+            },
+            {
+              "from": {
+                "node": 2
+              },
+              "to": {
+                "node": 6
+              }
+            },
+            {
+              "from": {
+                "node": 3
+              },
+              "to": {
+                "node": 4
+              }
+            },
+            {
+              "from": {
+                "node": 4
+              },
+              "to": {
+                "node": 5
+              }
+            },
+            {
+              "from": {
+                "node": 5
+              },
+              "to": {
+                "node": 6
+              }
+            },
+            {
+              "from": {
+                "node": 6
+              },
+              "to": {
+                "node": 7
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

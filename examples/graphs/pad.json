@@ -1,0 +1,109 @@
+{
+  "nodes": [
+    {
+      "id": "oscA",
+      "kind": "oscillator",
+      "params": {
+        "type": "triangle",
+        "frequency": 220,
+        "startTime": 0
+      }
+    },
+    {
+      "id": "oscB",
+      "kind": "oscillator",
+      "params": {
+        "type": "triangle",
+        "frequency": 222,
+        "startTime": 0
+      }
+    },
+    {
+      "id": "mix",
+      "kind": "audio-mixer",
+      "params": {}
+    },
+    {
+      "id": "lp",
+      "kind": "biquad-filter",
+      "params": {
+        "type": "lowpass",
+        "frequency": 2000,
+        "Q": 0.7
+      }
+    },
+    {
+      "id": "amp",
+      "kind": "gain",
+      "params": {
+        "gain": 0
+      }
+    },
+    {
+      "id": "stereo",
+      "kind": "channel-mixer",
+      "params": {
+        "outputChannels": 2,
+        "channelInterpretation": "speakers"
+      }
+    },
+    {
+      "id": "emit",
+      "kind": "emitter",
+      "params": {
+        "emitterType": "global",
+        "gain": 1
+      }
+    }
+  ],
+  "connections": [
+    {
+      "from": {
+        "node": "oscA"
+      },
+      "to": {
+        "node": "mix"
+      }
+    },
+    {
+      "from": {
+        "node": "oscB"
+      },
+      "to": {
+        "node": "mix"
+      }
+    },
+    {
+      "from": {
+        "node": "mix"
+      },
+      "to": {
+        "node": "lp"
+      }
+    },
+    {
+      "from": {
+        "node": "lp"
+      },
+      "to": {
+        "node": "amp"
+      }
+    },
+    {
+      "from": {
+        "node": "amp"
+      },
+      "to": {
+        "node": "stereo"
+      }
+    },
+    {
+      "from": {
+        "node": "stereo"
+      },
+      "to": {
+        "node": "emit"
+      }
+    }
+  ]
+}

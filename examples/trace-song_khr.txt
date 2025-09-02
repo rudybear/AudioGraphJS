@@ -1,0 +1,31 @@
+createOscillator id=padOsc
+Oscillator[padOsc].type=triangle
+Oscillator[padOsc].frequency.setValueAtTime(220, 0)
+Oscillator[padOsc].start(0)
+createBiquadFilter id=padLP
+Biquad[padLP].type=lowpass
+Biquad[padLP].frequency.setValueAtTime(1500, 0)
+Biquad[padLP].Q.setValueAtTime(0.700, 0)
+wrapBypass(dry=0, wet=1)
+createGain id=padAmp
+Gain[padAmp].gain.setValueAtTime(0, 0)
+createOscillator id=leadOsc
+Oscillator[leadOsc].type=sawtooth
+Oscillator[leadOsc].frequency.setValueAtTime(440, 0)
+Oscillator[leadOsc].start(0)
+createBiquadFilter id=leadLP
+Biquad[leadLP].type=lowpass
+Biquad[leadLP].frequency.setValueAtTime(3500, 0)
+Biquad[leadLP].Q.setValueAtTime(0.700, 0)
+wrapBypass(dry=0, wet=1)
+createGain id=leadAmp
+Gain[leadAmp].gain.setValueAtTime(0, 0)
+createAudioMixer id=mix
+createEmitter id=emit -> connect(emitter.output, destination)
+connect padOsc -> padLP
+connect padLP -> padAmp
+connect padAmp -> mix
+connect leadOsc -> leadLP
+connect leadLP -> leadAmp
+connect leadAmp -> mix
+connect mix -> emit

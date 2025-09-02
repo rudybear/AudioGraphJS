@@ -198,7 +198,7 @@ async function main() {
           const p = (n.params ||= {});
           if (!('buffer' in p) && !('uri' in p)) {
             const key = path.basename(abs).toLowerCase();
-            if (key.includes('snare')) { p.uri = makeNoiseDataUri({ seconds: 0.35, amp: 0.7 }); p.duration = 0.35; }
+            if (key.includes('snare') || key.includes('drum-party')) { p.uri = makeNoiseDataUri({ seconds: 0.35, amp: 0.7 }); p.duration = key.includes('drum-party') ? 0.2 : 0.35; }
             if (key.includes('cymbal')) { p.uri = makeNoiseDataUri({ seconds: 2.0, amp: 0.5 }); p.duration = 2.0; }
             if (key.includes('buffer')) { p.uri = makeNoiseDataUri({ seconds: 1.0, amp: 0.6 }); p.duration = 1.0; }
           }
