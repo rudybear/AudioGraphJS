@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "0.1",
+  "audioData": [
+    { "bufferView": 0, "mimeType": "audio/wav", "encodingProperties": { "bitsPerSample": 16, "duration": 1000, "samples": 48000, "sampleRate": 48000, "channels": 1 } }
+  ],
+  "graphs": [
+    {
+      "name": "simple",
+      "nodes": [
+        { "label": "osc source", "kind": "source", "params": { "data": { "oscillator": { "type": 1, "frequency": 440, "pulseWidth": 0.25 } }, "when": 0, "duration": 500 } },
+        { "label": "gain", "kind": "gain", "params": { "gain": 0.5 } }
+      ],
+      "connections": [
+        { "from": { "node": 0 }, "to": { "node": 1 } }
+      ],
+      "outputs": [1]
+    },
+    {
+      "name": "with-emitter",
+      "nodes": [
+        { "label": "buffer source", "kind": "source", "params": { "data": { "audioData": 0 }, "when": 0, "loop": false } },
+        { "label": "emitter", "kind": "emitter", "params": { "emitterType": "global", "gain": 1 } }
+      ],
+      "connections": [ { "from": { "node": 0 }, "to": { "node": 1 } } ]
+    }
+  ]
+}
