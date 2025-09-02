@@ -1,0 +1,28 @@
+{
+  "version": "phase2-2025-09-01",
+  "nodes": [
+    { "spec": "source", "webAudio": "AudioBufferSourceNode", "runtime": "implemented", "notes": "playbackSpeed->playbackRate; ms->s for loopStart/End/offset/duration" },
+    { "spec": "oscillator", "webAudio": "OscillatorNode", "runtime": "implemented", "notes": "pulseWidth static via PeriodicWave (square only)" },
+    { "spec": "gain", "webAudio": "GainNode", "runtime": "implemented", "notes": "interpolation+duration smoothing; channelInterpretation optional" },
+    { "spec": "delay", "webAudio": "DelayNode", "runtime": "implemented", "notes": "delayTime in ms (spec); channelInterpretation optional" },
+    { "spec": "filter_lowpass", "webAudio": "BiquadFilterNode(lowpass)", "runtime": "implemented", "notes": "frequency,Q,gain;bypass optional" },
+    { "spec": "filter_highpass", "webAudio": "BiquadFilterNode(highpass)", "runtime": "implemented", "notes": "" },
+    { "spec": "filter_bandpass", "webAudio": "BiquadFilterNode(bandpass)", "runtime": "implemented", "notes": "" },
+    { "spec": "filter_lowshelf", "webAudio": "BiquadFilterNode(lowshelf)", "runtime": "implemented", "notes": "" },
+    { "spec": "filter_highshelf", "webAudio": "BiquadFilterNode(highshelf)", "runtime": "implemented", "notes": "" },
+    { "spec": "filter_peaking", "webAudio": "BiquadFilterNode(peaking)", "runtime": "implemented", "notes": "" },
+    { "spec": "filter_notch", "webAudio": "BiquadFilterNode(notch)", "runtime": "implemented", "notes": "" },
+    { "spec": "filter_allpass", "webAudio": "BiquadFilterNode(allpass)", "runtime": "implemented", "notes": "" },
+    { "spec": "reverb", "webAudio": "ConvolverNode", "runtime": "implemented", "notes": "IR-based with wet/dry gains; algorithmic params out-of-scope" },
+    { "spec": "stereo_panner", "webAudio": "StereoPannerNode", "runtime": "implemented", "notes": "pan [-1..1]" },
+    { "spec": "panner", "webAudio": "PannerNode", "runtime": "implemented", "notes": "panningModel,distanceModel,refDistance,maxDistance,rolloffFactor,cone*" },
+    { "spec": "channel_splitter", "webAudio": "ChannelSplitterNode", "runtime": "implemented", "notes": "" },
+    { "spec": "channel_merger", "webAudio": "ChannelMergerNode", "runtime": "implemented", "notes": "" },
+    { "spec": "channel_mixer", "webAudio": "GainNode(channelCountMode='explicit')", "runtime": "implemented", "notes": "applies mixing rules implicitly" },
+    { "spec": "audio_mixer", "webAudio": "GainNode (summing)", "runtime": "implemented", "notes": "N to 1 sum" },
+    { "spec": "emitter", "webAudio": "Gain + (Panner|none)", "runtime": "implemented", "notes": "global|spatial" },
+    { "spec": "pitch_shifter", "webAudio": "(custom/Worklet)", "runtime": "deferred", "notes": "no stock node" },
+    { "spec": "waveshaper (proposed)", "webAudio": "WaveShaperNode", "runtime": "implemented (runtime-only)", "notes": "optional addition to spec" }
+  ]
+}
+
