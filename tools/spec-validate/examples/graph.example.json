@@ -22,6 +22,26 @@
         { "label": "emitter", "kind": "emitter", "params": { "emitterType": "global", "gain": 1 } }
       ],
       "connections": [ { "from": { "node": 0 }, "to": { "node": 1 } } ]
+    },
+    {
+      "name": "split-merge-mix",
+      "nodes": [
+        { "label": "src", "kind": "source", "params": { "data": { "oscillator": { "type": 1, "frequency": 440 } }, "when": 0, "duration": 400 } },
+        { "label": "split", "kind": "splitter", "params": {} },
+        { "label": "lp", "kind": "lowpass", "params": { "frequency": 800, "qualityFactor": 0.707 } },
+        { "label": "hp", "kind": "highpass", "params": { "frequency": 1200, "qualityFactor": 0.707 } },
+        { "label": "merge", "kind": "channelmerger", "params": {} },
+        { "label": "mix", "kind": "audiomixer", "params": {} }
+      ],
+      "connections": [
+        { "from": { "node": 0 }, "to": { "node": 1 } },
+        { "from": { "node": 1, "output": 0 }, "to": { "node": 2 } },
+        { "from": { "node": 2 }, "to": { "node": 4, "input": 0 } },
+        { "from": { "node": 1, "output": 1 }, "to": { "node": 3 } },
+        { "from": { "node": 3 }, "to": { "node": 4, "input": 1 } },
+        { "from": { "node": 4 }, "to": { "node": 5 } }
+      ],
+      "outputs": [5]
     }
   ]
 }

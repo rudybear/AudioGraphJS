@@ -61,7 +61,7 @@ function main() {
     if (!okGraph) { ok = false; console.error('FAIL graph.example.json -> glTF.KHR_audio_graph.schema.json'); console.error(vGraph.errors); }
     else {
       console.log('OK   graph.example.json -> glTF.KHR_audio_graph.schema.json');
-      // Linter: emitter in-degree=1; no emitter out-degree; must have sink (emitter or outputs)
+      // Linter: emitter in-degree=1; no emitter out-degree; must have sink (emitter or outputs); DAG; basic arities
       for (const g of graphData.graphs || []) {
         const indeg = new Map(); const outdeg = new Map();
         const kinds = (g.nodes || []).map(n => n.kind);
@@ -76,7 +76,24 @@ function main() {
           }
         }
         if (!hasSink) { ok = false; console.error('LINT: graph must have at least one sink (emitter or outputs[])'); }
-        // TODO: DAG check (skip in stub for brevity)
+        // DAG check
+        const adj = new Map();
+        for (let i=0;i<kinds.length;i++) adj.set(i, []);
+        for (const c of g.connections || []) { (adj.get(c.from.node) || []).push(c.to.node); }
+        const temp = new Set(); const perm = new Set();
+        function visit(v){ if (perm.has(v)) return false; if (temp.has(v)) return true; temp.add(v); for(const w of adj.get(v)||[]){ if(visit(w)) return true;} temp.delete(v); perm.add(v); return false; }
+        for (let i=0;i<kinds.length;i++) { if (!perm.has(i)) { if (visit(i)) { ok=false; console.error('LINT: graph contains a cycle (must be DAG)'); break; } } }
+        // Basic arity checks
+        const outputsSet = new Set(Array.isArray(g.outputs) ? g.outputs : []);
+        for (let i=0;i<kinds.length;i++) {
+          const inD = indeg.get(i)||0, outD = outdeg.get(i)||0;
+          switch (kinds[i]) {
+            case 'splitter': if (inD !== 1) { ok=false; console.error(`LINT: splitter ${i} must have exactly 1 input`);} if (outD < 1) { ok=false; console.error(`LINT: splitter ${i} must have at least 1 output`);} break;
+            case 'channelmerger': if (inD < 1) { ok=false; console.error(`LINT: channelmerger ${i} must have at least 1 input`);} if (!outputsSet.has(i) && outD !== 1) { ok=false; console.error(`LINT: channelmerger ${i} must have exactly 1 output`);} break;
+            case 'channelmixer':
+            case 'audiomixer': if (inD < 1) { ok=false; console.error(`LINT: ${kinds[i]} ${i} must have at least 1 input`);} if (!outputsSet.has(i) && outD !== 1) { ok=false; console.error(`LINT: ${kinds[i]} ${i} must have exactly 1 output`);} break;
+          }
+        }
       }
     }
   }
