@@ -6,7 +6,7 @@ import child_process from 'node:child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const graphsDir = path.join(__dirname, 'graphs');
+const graphsDirs = [path.join(__dirname, 'graphs'), path.join(__dirname, 'graphs-khr')];
 const expectedDir = path.join(__dirname, 'expected');
 
 function run(cmd, args) {
@@ -17,11 +17,11 @@ function read(p) { return fs.readFileSync(p, 'utf-8').replace(/\r\n/g, '\n'); }
 
 async function main() {
   if (!fs.existsSync(expectedDir)) fs.mkdirSync(expectedDir);
-  const files = fs.readdirSync(graphsDir).filter((f) => f.endsWith('.json'));
+  const files = graphsDirs.flatMap((dir) => fs.existsSync(dir) ? fs.readdirSync(dir).filter((f) => f.endsWith('.json')).map((f) => path.join(dir, f)) : []);
   let failed = false;
   for (const f of files) {
-    const full = path.join(graphsDir, f);
-    const baseKey = f.replace(/\W+/g, '_').replace(/_json$/, '');
+    const full = f;
+    const baseKey = path.basename(f).replace(/\W+/g, '_').replace(/_json$/, '');
     const outTrace = path.join(__dirname, `trace-${baseKey}.txt`);
     const outWav = path.join(__dirname, `output-${baseKey}.wav`);
     const expTrace = path.join(expectedDir, `trace-${baseKey}.txt`);

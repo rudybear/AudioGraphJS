@@ -1,0 +1,6 @@
+createOscillator id=0
+Oscillator[0].type=1
+Oscillator[0].frequency.setValueAtTime(330, 0)
+Oscillator[0].start(0)
+createEmitter id=1 -> connect(emitter.output, destination)
+connect 0 -> 1
