@@ -13,5 +13,3 @@ Gain[wetGain].gain.setValueAtTime(0.400, 0)
 connect osc -> dryGain
 connect osc -> wetconv
 connect wetconv -> wetGain
-connect output sink dryGain -> destination
-connect output sink wetGain -> destination

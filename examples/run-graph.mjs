@@ -93,6 +93,16 @@ function mapKHRToRuntime(extRoot, graph) {
   for (const n of graph.nodes || []) {
     const mapped = mapNodeKind(n.kind || n.type || n.nodetype || n.name || 'unknown', n.params || n);
     const id = (n.label && typeof n.label === 'string') ? n.label : String(nodes.length);
+    // If KHR reverb provides an impulse reference, map to convolver uri; else synthesize a small IR
+    if ((n.kind === 'reverb' || n.kind === 'convolver') && mapped.kind === 'convolver') {
+      const p = mapped.params || {};
+      if (n.params && typeof n.params.impulse === 'number' && Array.isArray(extRoot.audioData)) {
+        const entry = extRoot.audioData[n.params.impulse];
+        if (entry && typeof entry.uri === 'string') p.uri = entry.uri;
+      }
+      if (!p.uri) p.uri = makeIRDataUri({ seconds: 0.4 });
+      mapped.params = p;
+    }
     idByIndex.push(id);
     nodes.push({ id, kind: mapped.kind, params: mapped.params });
   }
@@ -120,6 +130,18 @@ function writeWavPCM16LE({ samples, sampleRate, numChannels }) {
   buffer.writeUInt32LE(byteRate, o); o += 4; buffer.writeUInt16LE(blockAlign, o); o += 2; buffer.writeUInt16LE(16, o); o += 2; buffer.write('data', o); o += 4; buffer.writeUInt32LE(dataSize, o); o += 4;
   for (let i = 0; i < samples.length; i++) buffer.writeInt16LE(floatTo16BitPCM(samples[i]), 44 + i * 2);
   return buffer;
+}
+function makeIRDataUri({ seconds = 0.4, sampleRate = 48000, decay = 3 }) {
+  const length = Math.floor(sampleRate * seconds);
+  const numChannels = 1;
+  const samples = new Float32Array(length);
+  for (let i = 0; i < length; i++) {
+    const t = i / length;
+    const env = Math.pow(1 - t, decay);
+    samples[i] = (Math.random() * 2 - 1) * env * 0.6;
+  }
+  const wav = writeWavPCM16LE({ samples, sampleRate, numChannels });
+  return `data:audio/wav;base64,${Buffer.from(wav).toString('base64')}`;
 }
 
 function normalizeTrace(lines) {

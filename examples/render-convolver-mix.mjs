@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import wae from 'web-audio-engine';
-import { buildGraphAsync } from '../dist/index.js';
+import { buildGraphAsync, createMemoryTrace } from '../dist/index.js';
 
 const { OfflineAudioContext } = wae;
 const __filename = fileURLToPath(import.meta.url);
@@ -55,7 +55,8 @@ async function main() {
     ]
   };
 
-  const g = await buildGraphAsync(ctx, spec);
+  const trace = createMemoryTrace();
+  const g = await buildGraphAsync(ctx, spec, trace);
   // Sum to destination
   g.nodes.get('dryGain')?.connect(ctx.destination);
   g.nodes.get('wetGain')?.connect(ctx.destination);
@@ -70,7 +71,11 @@ async function main() {
   const outPath = path.join(__dirname, 'output-convolver-mix.wav');
   fs.writeFileSync(outPath, wav);
   console.log(`Wrote ${outPath}`);
+
+  const norm = (lines) => lines.map((l) => l.replace(/(\d+\.\d{1,})/g, (m) => Number.parseFloat(m).toFixed(3)));
+  const tracePath = path.join(__dirname, 'trace-convolver-mix.txt');
+  fs.writeFileSync(tracePath, norm(trace.getLines()).join('\n'));
+  console.log(`Wrote ${tracePath}`);
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });
-
