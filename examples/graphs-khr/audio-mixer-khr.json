@@ -1,0 +1,23 @@
+{
+  "extensionsUsed": ["KHR_audio_graph"],
+  "extensions": {
+    "KHR_audio_graph": {
+      "schemaVersion": "0.1",
+      "graphs": [
+        {
+          "name": "audio-mixer",
+          "nodes": [
+            { "label": "oscA", "kind": "source", "params": { "data": { "oscillator": { "type": 0, "frequency": 440 } }, "when": 0, "duration": 1000 } },
+            { "label": "oscB", "kind": "source", "params": { "data": { "oscillator": { "type": 0, "frequency": 660 } }, "when": 0, "duration": 1000 } },
+            { "label": "mix", "kind": "audiomixer", "params": {} }
+          ],
+          "connections": [
+            { "from": { "node": 0 }, "to": { "node": 2 } },
+            { "from": { "node": 1 }, "to": { "node": 2 } }
+          ],
+          "outputs": [2]
+        }
+      ]
+    }
+  }
+}

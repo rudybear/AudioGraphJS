@@ -1,0 +1,9 @@
+{
+  "nodes": [
+    { "id": "osc", "kind": "oscillator", "params": { "type": "sine", "frequency": 440, "startTime": 0 } },
+    { "id": "lp", "kind": "biquad-filter", "params": { "type": "lowpass", "frequency": 1000, "Q": 0.707 } }
+  ],
+  "connections": [ { "from": { "node": "osc" }, "to": { "node": "lp" } } ],
+  "outputs": ["lp"]
+}
+

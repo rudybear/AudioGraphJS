@@ -1,0 +1,18 @@
+{
+  "extensionsUsed": ["KHR_audio_graph"],
+  "extensions": {
+    "KHR_audio_graph": {
+      "schemaVersion": "0.1",
+      "audioData": [ { "uri": "GENERATE_NOISE:1.0:0.6" } ],
+      "graphs": [
+        {
+          "name": "buffer",
+          "nodes": [ { "label": "noise", "kind": "source", "params": { "data": { "audioData": 0 }, "when": 0, "duration": 1000 } } ],
+          "connections": [],
+          "outputs": [0]
+        }
+      ]
+    }
+  }
+}
+

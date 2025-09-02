@@ -1,0 +1,8 @@
+{
+  "nodes": [
+    { "id": "noise", "kind": "audio-buffer-source", "params": { "startTime": 0 } }
+  ],
+  "connections": [],
+  "outputs": ["noise"]
+}
+

@@ -1,0 +1,16 @@
+{
+  "nodes": [
+    { "id": "oscL", "kind": "oscillator", "params": { "type": "sine", "frequency": 440, "startTime": 0 } },
+    { "id": "oscR", "kind": "oscillator", "params": { "type": "sine", "frequency": 880, "startTime": 0 } },
+    { "id": "merge", "kind": "channel-merger", "params": { "numberOfInputs": 2 } },
+    { "id": "split", "kind": "channel-splitter", "params": { "numberOfOutputs": 2 } },
+    { "id": "left", "kind": "gain", "params": { "gain": 1 } }
+  ],
+  "connections": [
+    { "from": { "node": "oscL" }, "to": { "node": "merge" } },
+    { "from": { "node": "oscR" }, "to": { "node": "merge" } },
+    { "from": { "node": "merge" }, "to": { "node": "split" } },
+    { "from": { "node": "split", "output": 0 }, "to": { "node": "left" } }
+  ],
+  "outputs": ["left"]
+}

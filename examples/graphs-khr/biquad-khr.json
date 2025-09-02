@@ -1,0 +1,20 @@
+{
+  "extensionsUsed": ["KHR_audio_graph"],
+  "extensions": {
+    "KHR_audio_graph": {
+      "schemaVersion": "0.1",
+      "graphs": [
+        {
+          "name": "biquad",
+          "nodes": [
+            { "label": "osc", "kind": "source", "params": { "data": { "oscillator": { "type": 0, "frequency": 440 } }, "when": 0, "duration": 1000 } },
+            { "label": "lp", "kind": "lowpass", "params": { "frequency": 1000, "qualityFactor": 0.707 } }
+          ],
+          "connections": [ { "from": { "node": 0 }, "to": { "node": 1 } } ],
+          "outputs": [1]
+        }
+      ]
+    }
+  }
+}
+

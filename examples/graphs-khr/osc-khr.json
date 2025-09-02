@@ -1,0 +1,17 @@
+{
+  "extensionsUsed": ["KHR_audio_graph"],
+  "extensions": {
+    "KHR_audio_graph": {
+      "schemaVersion": "0.1",
+      "graphs": [
+        {
+          "name": "osc",
+          "nodes": [ { "label": "osc", "kind": "source", "params": { "data": { "oscillator": { "type": 0, "frequency": 440 } }, "when": 0, "duration": 1000 } } ],
+          "connections": [],
+          "outputs": [0]
+        }
+      ]
+    }
+  }
+}
+

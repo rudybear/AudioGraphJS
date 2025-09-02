@@ -1,0 +1,8 @@
+{
+  "nodes": [
+    { "id": "osc", "kind": "oscillator", "params": { "type": "square", "pulseWidth": 0.25, "frequency": 330, "startTime": 0 } }
+  ],
+  "connections": [],
+  "outputs": ["osc"]
+}
+

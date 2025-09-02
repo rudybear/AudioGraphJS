@@ -1,0 +1,9 @@
+{
+  "nodes": [
+    { "id": "osc", "kind": "oscillator", "params": { "type": "sine", "frequency": 440, "startTime": 0 } },
+    { "id": "mix", "kind": "channel-mixer", "params": { "outputChannels": 2, "channelInterpretation": "speakers" } }
+  ],
+  "connections": [ { "from": { "node": "osc" }, "to": { "node": "mix" } } ],
+  "outputs": ["mix"]
+}
+

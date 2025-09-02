@@ -1,0 +1,9 @@
+{
+  "nodes": [
+    { "id": "osc", "kind": "oscillator", "params": { "type": "sine", "frequency": 440, "startTime": 0 } },
+    { "id": "gain", "kind": "gain", "params": { "gain": 0.5 } }
+  ],
+  "connections": [ { "from": { "node": "osc" }, "to": { "node": "gain" } } ],
+  "outputs": ["gain"]
+}
+

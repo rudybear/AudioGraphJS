@@ -97,7 +97,15 @@ function mapKHRToRuntime(extRoot, graph) {
     if (n.kind === 'source' && n.params && typeof n.params.data?.audioData === 'number' && Array.isArray(extRoot.audioData)) {
       const entry = extRoot.audioData[n.params.data.audioData];
       if (entry && typeof entry.uri === 'string') {
-        mapped.params = { ...(mapped.params || {}), uri: entry.uri };
+        let uri = entry.uri;
+        if (uri.startsWith('GENERATE_NOISE')) {
+          // Format: GENERATE_NOISE[:seconds[:amp]]
+          const parts = uri.split(':');
+          const seconds = parts[1] ? parseFloat(parts[1]) : 1.0;
+          const amp = parts[2] ? parseFloat(parts[2]) : 0.7;
+          uri = makeNoiseDataUri({ seconds, amp });
+        }
+        mapped.params = { ...(mapped.params || {}), uri };
       }
     }
     // If KHR reverb provides an impulse reference, map to convolver uri; else synthesize a small IR
@@ -192,6 +200,7 @@ async function main() {
             const key = path.basename(abs).toLowerCase();
             if (key.includes('snare')) { p.uri = makeNoiseDataUri({ seconds: 0.35, amp: 0.7 }); p.duration = 0.35; }
             if (key.includes('cymbal')) { p.uri = makeNoiseDataUri({ seconds: 2.0, amp: 0.5 }); p.duration = 2.0; }
+            if (key.includes('buffer')) { p.uri = makeNoiseDataUri({ seconds: 1.0, amp: 0.6 }); p.duration = 1.0; }
           }
         }
       }

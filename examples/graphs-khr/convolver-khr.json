@@ -1,0 +1,19 @@
+{
+  "extensionsUsed": ["KHR_audio_graph"],
+  "extensions": {
+    "KHR_audio_graph": {
+      "schemaVersion": "0.1",
+      "graphs": [
+        {
+          "name": "convolver",
+          "nodes": [
+            { "label": "osc", "kind": "source", "params": { "data": { "oscillator": { "type": 0, "frequency": 330 } }, "when": 0, "duration": 1000 } },
+            { "label": "conv", "kind": "reverb", "params": { "normalize": true } }
+          ],
+          "connections": [ { "from": { "node": 0 }, "to": { "node": 1 } } ],
+          "outputs": [1]
+        }
+      ]
+    }
+  }
+}
