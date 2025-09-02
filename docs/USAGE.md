@@ -20,3 +20,8 @@
     ```
   - Checks: DAG (no cycles), sink presence (emitter or outputs[]), emitter degree (in=1, out=0), basic arity for splitter/merger/mixer.
 
+- Spec Validation & glTF Validator (CLI)
+  - Schema + lints for examples: `npm run spec:validate`
+  - Validate real glTF files (only `extensions.KHR_audio_graph` is examined):
+    - `npm run spec:validate:gltf path/to/scene.gltf [more.gltf]`
+    - Prints JSON Schema errors and linter findings per file; ignores non‑audio parts of the glTF.
