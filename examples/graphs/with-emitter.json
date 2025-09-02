@@ -1,0 +1,8 @@
+{
+  "nodes": [
+    { "id": "src", "kind": "oscillator", "params": { "type": "square", "pulseWidth": 0.25, "frequency": 330, "startTime": 0 } },
+    { "id": "emit", "kind": "emitter", "params": { "emitterType": "global", "gain": 0.9 } }
+  ],
+  "connections": [ { "from": { "node": "src" }, "to": { "node": "emit" } } ]
+}
+
