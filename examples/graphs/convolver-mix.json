@@ -1,0 +1,15 @@
+{
+  "nodes": [
+    { "id": "osc", "kind": "oscillator", "params": { "type": "sine", "frequency": 330, "startTime": 0 } },
+    { "id": "wetconv", "kind": "convolver", "params": { "normalize": true } },
+    { "id": "dryGain", "kind": "gain", "params": { "gain": 0.6 } },
+    { "id": "wetGain", "kind": "gain", "params": { "gain": 0.4 } }
+  ],
+  "connections": [
+    { "from": { "node": "osc" }, "to": { "node": "dryGain" } },
+    { "from": { "node": "osc" }, "to": { "node": "wetconv" } },
+    { "from": { "node": "wetconv" }, "to": { "node": "wetGain" } }
+  ],
+  "outputs": ["dryGain", "wetGain"]
+}
+

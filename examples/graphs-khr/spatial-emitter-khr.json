@@ -7,8 +7,8 @@
         {
           "name": "spatial-emitter",
           "nodes": [
-            { "kind": "source", "params": { "data": { "oscillator": { "type": 1, "frequency": 330, "pulseWidth": 0.25 } }, "when": 0, "duration": 800 } },
-            { "kind": "emitter", "params": { "emitterType": "spatial", "gain": 0.9, "spatialProperties": { "spatializationModel": "equalpower", "attenuation": { "distanceModel": "linear", "refDistance": 1, "maxDistance": 1000, "rolloffFactor": 1 } } } }
+            { "label": "src", "kind": "source", "params": { "data": { "oscillator": { "type": 0, "frequency": 330 } }, "when": 0, "duration": 800 } },
+            { "label": "emit", "kind": "emitter", "params": { "emitterType": "spatial", "gain": 0.9, "spatialProperties": { "spatializationModel": "equalpower", "attenuation": { "distanceModel": "linear", "refDistance": 1, "maxDistance": 1000, "rolloffFactor": 1 } } } }
           ],
           "connections": [ { "from": { "node": 0 }, "to": { "node": 1 } } ]
         }
@@ -16,4 +16,3 @@
     }
   }
 }
-

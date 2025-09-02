@@ -162,7 +162,16 @@ async function main() {
     const outWav = path.join(__dirname, `output-${base}.wav`);
     const outTrace = path.join(__dirname, `trace-${base}.txt`);
     const json = readJson(abs);
-    const spec = asRuntimeSpec(json);
+    let spec = asRuntimeSpec(json);
+    // For runtime GraphSpec without IR on convolver, synthesize an IR so traces align with KHR mapping
+    if (Array.isArray(spec.nodes)) {
+      for (const n of spec.nodes) {
+        if (n.kind === 'convolver') {
+          const p = (n.params ||= {});
+          if (!('uri' in p)) p.uri = makeIRDataUri({ seconds: 0.4 });
+        }
+      }
+    }
     const { errors } = lintGraph(spec);
     if (errors.length) { console.error(`LINT FAIL ${p}:\n` + errors.join('\n')); process.exitCode = 1; continue; }
     const sr = spec.sampleRate || 48000;

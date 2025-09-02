@@ -1,0 +1,17 @@
+createOscillator id=osc
+Oscillator[osc].type=sine
+Oscillator[osc].frequency.setValueAtTime(330, 0)
+Oscillator[osc].start(0)
+createConvolver id=wetconv (uri)
+Convolver[wetconv].normalize=true
+Convolver[wetconv].buffer <- uri(data:audio/wav;base64,UklGRiSWAABXQVZFZm10IBAAAAABAAEAgLsAAAB3AQ…)
+wrapBypass(dry=0, wet=1)
+createGain id=dryGain
+Gain[dryGain].gain.setValueAtTime(0.600, 0)
+createGain id=wetGain
+Gain[wetGain].gain.setValueAtTime(0.400, 0)
+connect osc -> dryGain
+connect osc -> wetconv
+connect wetconv -> wetGain
+connect output sink dryGain -> destination
+connect output sink wetGain -> destination

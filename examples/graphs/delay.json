@@ -1,0 +1,9 @@
+{
+  "nodes": [
+    { "id": "src", "kind": "oscillator", "params": { "type": "sine", "frequency": 440, "startTime": 0 } },
+    { "id": "delay", "kind": "delay", "params": { "delayTime": 0.12 } }
+  ],
+  "connections": [ { "from": { "node": "src" }, "to": { "node": "delay" } } ],
+  "outputs": ["delay"]
+}
+

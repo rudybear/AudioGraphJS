@@ -1,0 +1,8 @@
+{
+  "nodes": [
+    { "id": "src", "kind": "oscillator", "params": { "type": "sine", "frequency": 330, "startTime": 0 } },
+    { "id": "emit", "kind": "emitter", "params": { "emitterType": "spatial", "gain": 0.9, "spatialProperties": { "spatializationModel": "equalpower", "attenuation": { "distanceModel": "linear", "refDistance": 1, "maxDistance": 1000, "rolloffFactor": 1 } } } }
+  ],
+  "connections": [ { "from": { "node": "src" }, "to": { "node": "emit" } } ]
+}
+
