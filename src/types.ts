@@ -37,9 +37,16 @@ export interface GraphSpec {
   sampleRate?: number; // tests may lock to 48000
   nodes: GraphNodeSpec[];
   connections: GraphConnectionSpec[];
+  // Optional sink list: when provided, these node ids are connected to destination
+  outputs?: NodeId[];
 }
 
 export interface BuiltGraph {
   context: BaseAudioContext;
+  // For convenience, nodes map stores OUTPUT endpoints
   nodes: Map<NodeId, AudioNode>;
+  // Internal maps to address runtime wrappers
+  _inputs?: Map<NodeId, AudioNode>;
+  _outputs?: Map<NodeId, AudioNode>;
+  _bypass?: Map<NodeId, { dry: GainNode; wet: GainNode }>;
 }

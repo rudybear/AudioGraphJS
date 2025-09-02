@@ -1,4 +1,5 @@
 import { GraphNodeSpec } from '../types.js';
+import { applyChannelOptions } from './util.js';
 
 export interface WaveShaperParams {
   amount?: number; // 0..1 -> generate tanh-like curve
@@ -28,6 +29,7 @@ export function createWaveShaper(
     node.oversample = p.oversample;
     trace?.log?.(`WaveShaper[${spec.id}].oversample=${p.oversample}`);
   }
+  applyChannelOptions(node, p, trace);
   return node;
 }
 

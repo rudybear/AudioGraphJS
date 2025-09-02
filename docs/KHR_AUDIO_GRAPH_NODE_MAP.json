@@ -134,9 +134,9 @@
         { "name": "id", "type": "integer", "required": true },
         { "name": "pitch", "type": "number (semitones)", "required": false }
       ],
-      "web_audio_mapping": { "node": "(AudioWorkletNode or custom)", "params": {} },
-      "status": "not_implemented",
-      "notes": "Not provided by Web Audio standard nodes; requires DSP."
+      "web_audio_mapping": { "node": "(deferred)", "params": {} },
+      "status": "deferred",
+      "notes": "Deferred from initial scope; no stock Web Audio node."
     },
     {
       "spec_name": "channel_splitter",
@@ -289,23 +289,11 @@
       "io": "1 in / 1 out",
       "params": [
         { "name": "id", "type": "integer", "required": true },
-        { "name": "mix", "type": "number [0,100]", "required": true },
-        { "name": "earlyReflectionsGain", "type": "number", "required": true },
-        { "name": "diffusionGain", "type": "number", "required": true },
-        { "name": "roomSize", "type": "number (m)", "required": true },
-        { "name": "reflectivity", "type": "number [0,100]", "required": true },
-        { "name": "reflectivityHigh", "type": "number", "required": true },
-        { "name": "reflectivityLow", "type": "number", "required": true },
-        { "name": "earlyReflections", "type": "number [0,32]", "required": true },
-        { "name": "minDistance", "type": "number", "required": true },
-        { "name": "maxDistance", "type": "number", "required": true },
-        { "name": "reflectionDelay", "type": "number (ms)", "required": true },
-        { "name": "reverbDelay", "type": "number (ms)", "required": true },
-        { "name": "bypass", "type": "boolean", "required": false }
+        { "name": "mix", "type": "number [0,100]", "required": false }
       ],
-      "web_audio_mapping": { "node": "ConvolverNode (approx) or custom reverb", "params": {} },
-      "status": "not_implemented",
-      "notes": "Spec parameters imply algorithmic reverb. Convolver supports IR-based; mapping TBD."
+      "web_audio_mapping": { "node": "ConvolverNode (IR-based)", "params": {} },
+      "status": "implemented",
+      "notes": "Simple IR-based reverb via ConvolverNode + wet/dry Gains; algorithmic model excluded from initial scope."
     }
   ]
 }

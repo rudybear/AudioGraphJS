@@ -1,5 +1,6 @@
 import { GraphNodeSpec } from '../types.js';
 import { loadAudioBuffer } from '../assets/loadAudioBuffer.js';
+import { applyChannelOptions } from './util.js';
 
 export interface ConvolverParams {
   buffer?: AudioBuffer | null;
@@ -17,6 +18,7 @@ export function createConvolver(
   if (p.buffer !== undefined) node.buffer = p.buffer ?? null;
   if (p.buffer) trace?.log?.(`Convolver[${spec.id}].buffer=(len=${p.buffer.length}, sr=${p.buffer.sampleRate})`);
   if (p.normalize !== undefined) { node.normalize = !!p.normalize; trace?.log?.(`Convolver[${spec.id}].normalize=${node.normalize}`); }
+  applyChannelOptions(node, p, trace);
   return node;
 }
 

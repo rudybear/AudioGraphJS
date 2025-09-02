@@ -14,6 +14,8 @@ import { createAudioMixer } from '../nodes/audioMixer.js';
 import { createEmitterChain } from '../nodes/emitter.js';
 import { createWaveShaper } from '../nodes/waveShaper.js';
 import type { TraceLogger } from './trace.js';
+import { applyBypass } from './preprocess.js';
+import { wrapBypass } from './wrapBypass.js';
 
 function buildNode(context: BaseAudioContext, spec: GraphNodeSpec, trace?: TraceLogger): AudioNode {
   switch (spec.kind) {
@@ -66,21 +68,43 @@ export function buildGraph(
   spec: GraphSpec,
   trace?: TraceLogger
 ): BuiltGraph {
+  // Apply build-time bypass rewiring
+  spec = applyBypass(spec);
   const nodes = new Map<string, AudioNode>();
+  const inputs = new Map<string, AudioNode>();
+  const outputs = new Map<string, AudioNode>();
+  const bypass = new Map<string, { dry: GainNode; wet: GainNode }>();
   for (const n of spec.nodes) {
     if (n.kind === 'emitter') {
       const chain = createEmitterChain(context, n);
+      inputs.set(n.id, chain.input);
+      outputs.set(n.id, chain.input);
       nodes.set(n.id, chain.input);
       trace?.log(`createEmitter id=${n.id} -> connect(emitter.output, destination)`);
       chain.output.connect((context as any).destination);
     } else {
-      const node = buildNode(context, n, trace);
-      nodes.set(n.id, node);
+      // Build core node
+      const core = buildNode(context, n, trace);
+      // Wrap bypassable kinds
+      if (
+        n.kind === 'biquad-filter' || n.kind === 'delay' || n.kind === 'convolver' || n.kind === 'wave-shaper'
+      ) {
+        const initial = !!(n.params && (n.params as any).bypass);
+        const wrapped = wrapBypass(context, core, initial, trace);
+        inputs.set(n.id, wrapped.input);
+        outputs.set(n.id, wrapped.output);
+        nodes.set(n.id, wrapped.output);
+        bypass.set(n.id, { dry: wrapped.dry, wet: wrapped.wet });
+      } else {
+        inputs.set(n.id, core);
+        outputs.set(n.id, core);
+        nodes.set(n.id, core);
+      }
     }
   }
   for (const c of spec.connections) {
-    const from = nodes.get(c.from.node);
-    const to = nodes.get(c.to.node);
+    const from = outputs.get(c.from.node);
+    const to = inputs.get(c.to.node);
     if (!from || !to) throw new Error(`Invalid connection: ${c.from.node} -> ${c.to.node}`);
     // Basic port handling: default to main output/input; allow numeric indices
     const outIndex = typeof c.from.output === 'number' ? c.from.output : undefined;
@@ -92,5 +116,15 @@ export function buildGraph(
     else if (outIndex !== undefined) from.connect(to, outIndex);
     else from.connect(to);
   }
-  return { context, nodes };
+  // Connect global outputs sinks if provided
+  if (Array.isArray(spec.outputs) && spec.outputs.length > 0) {
+    for (const id of spec.outputs) {
+      const node = nodes.get(id);
+      if (node) {
+        trace?.log?.(`connect output sink ${id} -> destination`);
+        node.connect((context as any).destination);
+      }
+    }
+  }
+  return { context, nodes, _inputs: inputs, _outputs: outputs, _bypass: bypass };
 }

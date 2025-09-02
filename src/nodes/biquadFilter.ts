@@ -1,4 +1,5 @@
 import { GraphNodeSpec } from '../types.js';
+import { applyChannelOptions } from './util.js';
 
 export interface BiquadFilterParams {
   type?: BiquadFilterType;
@@ -21,5 +22,6 @@ export function createBiquadFilter(
   if (typeof p.detune === 'number') { node.detune.setValueAtTime(p.detune, context.currentTime); trace?.log?.(`Biquad[${spec.id}].detune.setValueAtTime(${p.detune}, ${context.currentTime})`); }
   if (typeof p.Q === 'number') { node.Q.setValueAtTime(p.Q, context.currentTime); trace?.log?.(`Biquad[${spec.id}].Q.setValueAtTime(${p.Q}, ${context.currentTime})`); }
   if (typeof p.gain === 'number') { node.gain.setValueAtTime(p.gain, context.currentTime); trace?.log?.(`Biquad[${spec.id}].gain.setValueAtTime(${p.gain}, ${context.currentTime})`); }
+  applyChannelOptions(node, p, trace);
   return node;
 }

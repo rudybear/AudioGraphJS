@@ -23,6 +23,7 @@
     "example:merger": "node examples/render-merger.mjs",
     "example:channel-mixer": "node examples/render-channel-mixer.mjs",
     "example:audio-mixer": "node examples/render-audio-mixer.mjs",
+    "example:splitter-merger-mixer": "node examples/render-splitter-merger-mixer.mjs",
     "example:emitter": "node examples/render-emitter.mjs",
     "example:complex": "node examples/render-complex-graph.mjs",
     "example:drum": "node examples/render-drum.mjs",
@@ -34,8 +35,11 @@
     "example:pad": "node examples/render-pad.mjs",
     "example:song": "node examples/render-song.mjs",
     "example:7nation": "node examples/render-seven-nation-army.mjs",
-    "examples": "npm-run-all -s build example:osc example:osc-pwm example:gain example:biquad example:delay example:buffer example:convolver example:convolver-mix example:stereo example:panner example:splitter example:merger example:channel-mixer example:audio-mixer example:emitter example:complex",
-    "dev": "npm run build && vite"
+    "example:bypass": "node examples/render-bypass-demo.mjs",
+    "example:parse-gltf": "node examples/parse-gltf.mjs",
+    "examples": "npm-run-all -s build example:osc example:osc-pwm example:gain example:biquad example:delay example:buffer example:convolver example:convolver-mix example:stereo example:panner example:splitter example:merger example:channel-mixer example:audio-mixer example:splitter-merger-mixer example:emitter example:complex",
+    "dev": "npm run build && vite",
+    "spec:validate": "node tools/spec-validate/validate.mjs"
   },
   "engines": {
     "node": ">=18"
@@ -48,7 +52,8 @@
     "vite": "^7.1.4",
     "vitest": "^1.6.0",
     "web-audio-engine": "^0.13.4",
-    "npm-run-all": "^4.1.5"
+    "npm-run-all": "^4.1.5",
+    "ajv": "^8.17.1"
   },
   "dependencies": {
     "standardized-audio-context": "^25.3.62"

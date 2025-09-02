@@ -1,4 +1,5 @@
 import { GraphNodeSpec } from '../types.js';
+import { applyChannelOptions } from './util.js';
 
 export interface StereoPannerParams {
   pan?: number; // AudioParam in [-1, 1]
@@ -14,5 +15,6 @@ export function createStereoPanner(
     : new (window as any).StereoPannerNode(context);
   const p = (spec.params || {}) as Partial<StereoPannerParams>;
   if (typeof p.pan === 'number') { node.pan.setValueAtTime(p.pan, context.currentTime); trace?.log?.(`StereoPanner[${spec.id}].pan.setValueAtTime(${p.pan}, ${context.currentTime})`); }
+  applyChannelOptions(node, p, trace);
   return node as StereoPannerNode;
 }

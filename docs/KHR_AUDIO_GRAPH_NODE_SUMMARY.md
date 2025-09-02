@@ -9,14 +9,14 @@
 - Emitter (implemented)
   - id, emitterType(global|spatial), gain, spatialProperties(spatializationModel, attenuation)
   - Maps to GainNode + (PannerNode/StereoPanner)
-- Listener → AudioListener (planned)
+- Listener → AudioListener (skipped)
 
 Processors
 - Gain → GainNode (implemented)
   - gain, interpolation, duration(ms)
 - Delay → DelayNode (implemented)
   - delayTime(ms)
-- Pitch Shifter (custom) (not_implemented)
+- Pitch Shifter (deferred)
   - pitch(semitones)
 - Channel Splitter → ChannelSplitterNode (implemented)
 - Channel Merger → ChannelMergerNode (implemented)
@@ -33,13 +33,15 @@ Processors
   - peaking: frequency, qualityFactor, gain, bypass
   - notch: frequency, qualityFactor, bypass
   - allpass: frequency, qualityFactor, bypass
-- Reverb (custom) (not_implemented)
-  - mix, earlyReflectionsGain, diffusionGain, roomSize, reflectivity(+high/low), earlyReflections, min/maxDistance, reflectionDelay(ms), reverbDelay(ms), bypass
+- Reverb (IR-based) (implemented)
+  - ConvolverNode + wet/dry mix; algorithmic parameters out of scope for now
 
 Notes
 - Unit conversions: ms ↔ s for Delay/Source timing.
 - Bypass: requires routing toggle; not native on Web Audio nodes.
+ - Bypass: supported two ways — build-time rewiring (spec JSON) and runtime toggling via wrapper (setBypass). For filters/delay/convolver/waveshaper, graphs are built with a dry/wet wrapper for runtime bypass.
 - Pitch shifter & Reverb: require custom DSP or Worklets; not standard nodes.
 - Spatialization: Emitter maps to PannerNode; listener bound to camera.
+ - Gain smoothing: honors `interpolation` (linear/custom) + `duration` (ms) when provided.
 
 See docs/KHR_AUDIO_GRAPH_NODE_MAP.json for machine-readable detail.

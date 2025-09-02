@@ -44,6 +44,8 @@
 Document noteworthy choices and approvals.
 - 2025-09-01: Agreed phases (runtime first, then serialization, then parser). Listener bound to camera; Node + browser targets; no animation. — approved by PM
 - 2025-09-01: AudioBufferSource is single-shot; rebuild graph to replay. Fixed sample rate allowed (use encoding properties for assets). Spatialization per glTF scheme. Convolver defaults per Web Audio. Node is primary target; CI later. Minimal private debug dump OK. — approved by PM
+- 2025-09-01: Listener binding skipped for initial runtime scope. Pitch Shifter deferred (requires DSP/Worklet). Reverb kept simple as IR-based Convolver with wet/dry mix; algorithmic model out of scope. — approved by PM
+- 2025-09-01: Graph schema direction agreed — Sources remain a single 0/1 node kind with data.oneOf { audioData: glTFid | oscillator: oscillator params } (timing fields in ms at Source level). Oscillator is not a separate node kind. Graph nodes will use a discriminator shape { kind, params, label? } and connections reference nodes by array index (glTF-style). Node-level numeric ids are deprecated; optional string label allowed for debug. Emitter remains a sink (1/0) in graph; Listener remains outside graph (per-node extension). JSON Schema validates structure/params; a linter (specified in spec) will enforce DAG, single listener, emitter single-input, etc. — agreed
 
 ## Next Actions
 - Scaffold Phase 0.
