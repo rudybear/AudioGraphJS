@@ -26,7 +26,7 @@ Biquad[peak3].gain.setValueAtTime(3, 0)
 wrapBypass(dry=0, wet=1)
 createGain id=gainEnv
 Gain[gainEnv].gain.setValueAtTime(1, 0)
-createEmitter id=emit -> connect(emitter.output, destination)
+createEmitterBus id=emit
 connect noise -> hp
 connect hp -> peak1
 connect peak1 -> peak2

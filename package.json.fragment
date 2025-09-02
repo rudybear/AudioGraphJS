@@ -1,0 +1,8 @@
+{
+  "scripts": {
+    "spec:validate": "node tools/spec-validate/validate.mjs"
+  },
+  "devDependencies": {
+    "ajv": "^8.17.1"
+  }
+}

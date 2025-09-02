@@ -6,6 +6,6 @@ createConvolver id=conv (uri)
 Convolver[conv].normalize=true
 Convolver[conv].buffer <- uri(data:audio/wav;base64,UklGRiSWAABXQVZFZm10IBAAAAABAAEAgLsAAAB3AQ…)
 wrapBypass(dry=0, wet=1)
-createEmitter id=emit -> connect(emitter.output, destination)
+createEmitterBus id=emit
 connect osc -> conv
 connect conv -> emit

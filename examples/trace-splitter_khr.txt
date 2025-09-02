@@ -10,7 +10,7 @@ createChannelMerger id=merge
 createChannelSplitter id=split
 createGain id=left
 Gain[left].gain.setValueAtTime(1, 0)
-createEmitter id=emit -> connect(emitter.output, destination)
+createEmitterBus id=emit
 connect oscL -> merge
 connect oscR -> merge
 connect merge -> split

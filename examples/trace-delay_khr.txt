@@ -5,6 +5,6 @@ Oscillator[src].start(0)
 createDelay id=delay
 Delay[delay].delayTime.setValueAtTime(0.120, 0)
 wrapBypass(dry=0, wet=1)
-createEmitter id=emit -> connect(emitter.output, destination)
+createEmitterBus id=emit
 connect src -> delay
 connect delay -> emit

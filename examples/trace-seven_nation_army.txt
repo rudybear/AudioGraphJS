@@ -24,11 +24,14 @@ Delay[slap].delayTime.setValueAtTime(0.070, 0)
 wrapBypass(dry=0, wet=1)
 createGain id=slapGain
 Gain[slapGain].gain.setValueAtTime(0.150, 0)
+createAudioMixer id=mix
+createEmitterBus id=emit
 connect osc -> lpf_pre
 connect lpf_pre -> dist
 connect dist -> lpf_post
 connect lpf_post -> amp
 connect amp -> slap
 connect slap -> slapGain
-connect output sink amp -> destination
-connect output sink slapGain -> destination
+connect amp -> mix
+connect slapGain -> mix
+connect mix -> emit

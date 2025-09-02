@@ -21,7 +21,7 @@ wrapBypass(dry=0, wet=1)
 createGain id=leadAmp
 Gain[leadAmp].gain.setValueAtTime(0, 0)
 createAudioMixer id=mix
-createEmitter id=emit -> connect(emitter.output, destination)
+createEmitterBus id=emit
 connect padOsc -> padLP
 connect padLP -> padAmp
 connect padAmp -> mix

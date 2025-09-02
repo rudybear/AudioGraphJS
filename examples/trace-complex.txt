@@ -1,0 +1,30 @@
+createOscillator id=osc
+Oscillator[osc].type=sine
+Oscillator[osc].frequency.setValueAtTime(330, 0)
+Oscillator[osc].start(0)
+createBiquadFilter id=lp
+Biquad[lp].type=lowpass
+Biquad[lp].frequency.setValueAtTime(1800, 0)
+Biquad[lp].Q.setValueAtTime(0.700, 0)
+wrapBypass(dry=0, wet=1)
+createDelay id=delay
+Delay[delay].delayTime.setValueAtTime(0.120, 0)
+wrapBypass(dry=0, wet=1)
+createConvolver id=conv (uri)
+Convolver[conv].normalize=true
+Convolver[conv].buffer <- uri(data:audio/wav;base64,UklGRiSWAABXQVZFZm10IBAAAAABAAEAgLsAAAB3AQ…)
+wrapBypass(dry=0, wet=1)
+createGain id=dry
+Gain[dry].gain.setValueAtTime(0.700, 0)
+createGain id=wet
+Gain[wet].gain.setValueAtTime(0.300, 0)
+createAudioMixer id=mix
+createEmitterBus id=emit
+connect osc -> lp
+connect lp -> delay
+connect delay -> dry
+connect delay -> conv
+connect conv -> wet
+connect dry -> mix
+connect wet -> mix
+connect mix -> emit

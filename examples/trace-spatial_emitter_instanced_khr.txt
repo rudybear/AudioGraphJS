@@ -1,7 +1,7 @@
 createOscillator id=src
-Oscillator[src].type=square
+Oscillator[src].type=sine
 Oscillator[src].frequency.setValueAtTime(330, 0)
-Oscillator[src].setPeriodicWave(pulseWidth=0.250)
 Oscillator[src].start(0)
 createEmitterBus id=emit
 connect src -> emit
+createEmitterInstance id=emit -> panner+gain -> destination

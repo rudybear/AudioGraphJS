@@ -6,7 +6,9 @@
     { "id": "lpf_post", "kind": "biquad-filter", "params": { "type": "lowpass", "frequency": 1200, "Q": 0.7 } },
     { "id": "amp", "kind": "gain", "params": { "gain": 0.0 } },
     { "id": "slap", "kind": "delay", "params": { "maxDelayTime": 0.3, "delayTime": 0.07 } },
-    { "id": "slapGain", "kind": "gain", "params": { "gain": 0.15 } }
+    { "id": "slapGain", "kind": "gain", "params": { "gain": 0.15 } },
+    { "id": "mix", "kind": "audio-mixer", "params": {} },
+    { "id": "emit", "kind": "emitter", "params": { "emitterType": "global", "gain": 1 } }
   ],
   "connections": [
     { "from": { "node": "osc" }, "to": { "node": "lpf_pre" } },
@@ -14,8 +16,9 @@
     { "from": { "node": "dist" }, "to": { "node": "lpf_post" } },
     { "from": { "node": "lpf_post" }, "to": { "node": "amp" } },
     { "from": { "node": "amp" }, "to": { "node": "slap" } },
-    { "from": { "node": "slap" }, "to": { "node": "slapGain" } }
-  ],
-  "outputs": ["amp", "slapGain"]
+    { "from": { "node": "slap" }, "to": { "node": "slapGain" } },
+    { "from": { "node": "amp" }, "to": { "node": "mix" } },
+    { "from": { "node": "slapGain" }, "to": { "node": "mix" } },
+    { "from": { "node": "mix" }, "to": { "node": "emit" } }
+  ]
 }
-

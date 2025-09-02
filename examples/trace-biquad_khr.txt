@@ -7,6 +7,6 @@ Biquad[lp].type=lowpass
 Biquad[lp].frequency.setValueAtTime(1000, 0)
 Biquad[lp].Q.setValueAtTime(0.707, 0)
 wrapBypass(dry=0, wet=1)
-createEmitter id=emit -> connect(emitter.output, destination)
+createEmitterBus id=emit
 connect osc -> lp
 connect lp -> emit

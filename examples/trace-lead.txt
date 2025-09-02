@@ -17,7 +17,7 @@ Gain[amp].gain.setValueAtTime(0, 0)
 createChannelMixer id=pan
 ChannelMixer[pan].channelCount=2
 ChannelMixer[pan].channelInterpretation=speakers
-createEmitter id=emit -> connect(emitter.output, destination)
+createEmitterBus id=emit
 connect osc1 -> mix
 connect osc2 -> mix
 connect mix -> lp

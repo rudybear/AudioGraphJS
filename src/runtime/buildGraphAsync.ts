@@ -84,12 +84,13 @@ export async function buildGraphAsync(
   const bypass = new Map<string, { dry: GainNode; wet: GainNode }>();
   for (const n of spec.nodes) {
     if (n.kind === 'emitter') {
-      const chain = createEmitterChain(context, n);
-      inputs.set(n.id, chain.input);
-      outputs.set(n.id, chain.input);
-      nodes.set(n.id, chain.input);
-      trace?.log(`createEmitter id=${n.id} -> connect(emitter.output, destination)`);
-      chain.output.connect((context as any).destination);
+      // Build a shared upstream bus for the emitter. Instance-specific panners/gains
+      // will be attached later via emitter instance expansion.
+      const bus = context.createGain();
+      inputs.set(n.id, bus);
+      outputs.set(n.id, bus);
+      nodes.set(n.id, bus);
+      trace?.log(`createEmitterBus id=${n.id}`);
     } else {
       const core = await buildNodeAsync(context, n, trace);
       if (

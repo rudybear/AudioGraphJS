@@ -5,3 +5,5 @@ export { lintGraph } from './runtime/lint.js';
 export { debugDump } from './serialization/debugDump.js';
 export { createMemoryTrace } from './runtime/trace.js';
 export { setBypass } from './runtime/bypassControl.js';
+export { extractEmitterBindings } from './serialization/gltf-emitters.js';
+export { applyEmitterInstances } from './runtime/emitters.js';

@@ -14,7 +14,7 @@ wrapBypass(dry=0, wet=1)
 createGain id=snareGain
 Gain[snareGain].gain.setValueAtTime(0, 0)
 createAudioMixer id=mix
-createEmitter id=emit -> connect(emitter.output, destination)
+createEmitterBus id=emit
 connect kick -> kickGain
 connect kickGain -> mix
 connect snareNoise -> snareHP

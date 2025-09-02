@@ -3,5 +3,5 @@ Oscillator[osc].type=square
 Oscillator[osc].frequency.setValueAtTime(330, 0)
 Oscillator[osc].setPeriodicWave(pulseWidth=0.250)
 Oscillator[osc].start(0)
-createEmitter id=emit -> connect(emitter.output, destination)
+createEmitterBus id=emit
 connect osc -> emit

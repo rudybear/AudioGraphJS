@@ -37,7 +37,8 @@ export function lintGraph(spec: GraphSpec): LintResult {
     }
   }
 
-  // Simple arity checks
+  // Simple arity checks (allow sink nodes listed in outputs[] to have zero outgoing edges)
+  const outputsSet = new Set(Array.isArray(spec.outputs) ? spec.outputs : []);
   for (const n of spec.nodes) {
     const inD = indeg.get(n.id) || 0;
     const outD = outdeg.get(n.id) || 0;
@@ -48,12 +49,12 @@ export function lintGraph(spec: GraphSpec): LintResult {
         break;
       case 'channel-merger':
         if (inD < 1) errors.push(`channel-merger ${n.id} must have at least 1 input`);
-        if (outD !== 1) errors.push(`channel-merger ${n.id} must have exactly 1 output`);
+        if (!outputsSet.has(n.id) && outD !== 1) errors.push(`channel-merger ${n.id} must have exactly 1 output`);
         break;
       case 'audio-mixer':
       case 'channel-mixer':
         if (inD < 1) errors.push(`${n.kind} ${n.id} must have at least 1 input`);
-        if (outD !== 1) errors.push(`${n.kind} ${n.id} must have exactly 1 output`);
+        if (!outputsSet.has(n.id) && outD !== 1) errors.push(`${n.kind} ${n.id} must have exactly 1 output`);
         break;
     }
   }
@@ -83,4 +84,3 @@ export function lintGraph(spec: GraphSpec): LintResult {
 
   return { errors, warnings };
 }
-

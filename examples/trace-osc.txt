@@ -2,5 +2,5 @@ createOscillator id=osc
 Oscillator[osc].type=sine
 Oscillator[osc].frequency.setValueAtTime(440, 0)
 Oscillator[osc].start(0)
-createEmitter id=emit -> connect(emitter.output, destination)
+createEmitterBus id=emit
 connect osc -> emit

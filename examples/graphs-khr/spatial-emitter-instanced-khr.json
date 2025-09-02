@@ -1,0 +1,23 @@
+{
+  "asset": { "version": "2.0" },
+  "nodes": [
+    { "name": "EmitterNode", "translation": [1, 0, 0], "extensions": { "KHR_audio_graph": { "emitter": 1 } } }
+  ],
+  "extensionsUsed": ["KHR_audio_graph"],
+  "extensions": {
+    "KHR_audio_graph": {
+      "schemaVersion": "0.1",
+      "graphs": [
+        {
+          "name": "spatial-emitter",
+          "nodes": [
+            { "label": "src", "kind": "source", "params": { "data": { "oscillator": { "type": 0, "frequency": 330 } }, "when": 0, "duration": 800 } },
+            { "label": "emit", "kind": "emitter", "params": { "emitterType": "spatial", "gain": 0.9, "spatialProperties": { "spatializationModel": "equalpower", "attenuation": { "distanceModel": "linear", "refDistance": 1, "maxDistance": 1000, "rolloffFactor": 1 } } } }
+          ],
+          "connections": [ { "from": { "node": 0 }, "to": { "node": 1 } } ]
+        }
+      ]
+    }
+  }
+}
+

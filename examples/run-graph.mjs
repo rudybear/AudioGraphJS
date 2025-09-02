@@ -5,7 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import crypto from 'node:crypto';
 import wae from 'web-audio-engine';
-import { buildGraphAsync, createMemoryTrace, lintGraph } from '../dist/index.js';
+import { buildGraphAsync, createMemoryTrace, lintGraph, extractEmitterBindings, applyEmitterInstances } from '../dist/index.js';
 
 const { OfflineAudioContext } = wae;
 const __filename = fileURLToPath(import.meta.url);
@@ -126,7 +126,7 @@ function mapKHRToRuntime(extRoot, graph, seedBase) {
     connections.push({ from: { node: idByIndex[c.from.node], output: c.from.output }, to: { node: idByIndex[c.to.node], input: c.to.input } });
   }
   const outputs = Array.isArray(graph.outputs) ? graph.outputs.map((i) => idByIndex[i]) : undefined;
-  return { nodes, connections, outputs };
+  return { spec: { nodes, connections, outputs }, idByIndex };
 }
 
 function asRuntimeSpec(obj) {
@@ -189,13 +189,15 @@ async function main() {
     const outWav = path.join(__dirname, `output-${base}.wav`);
     const outTrace = path.join(__dirname, `trace-${base}.txt`);
     const json = readJson(abs);
-    let spec;
+    let spec; let idByIndex;
     if (Array.isArray(json?.nodes) && Array.isArray(json?.connections)) {
       spec = json;
     } else if (json?.extensions?.KHR_audio_graph) {
       const ext = json.extensions.KHR_audio_graph;
       const seedBase = base.replace(/_khr$/, '');
-      spec = mapKHRToRuntime(ext, ext.graphs[0], seedBase);
+      const mapped = mapKHRToRuntime(ext, ext.graphs[0], seedBase);
+      spec = mapped.spec;
+      idByIndex = mapped.idByIndex;
     } else {
       throw new Error('Unsupported input JSON: expected runtime GraphSpec or KHR container');
     }
@@ -224,6 +226,29 @@ async function main() {
     const ctx = new OfflineAudioContext(2, sr * 2, sr);
     const trace = createMemoryTrace();
     const built = await buildGraphAsync(ctx, spec, trace);
+    // If input was a glTF with node-level emitter bindings, expand instances now
+    if (json?.nodes && json?.extensions?.KHR_audio_graph) {
+      const bindings = extractEmitterBindings(json);
+      if (bindings.length > 0 && Array.isArray(idByIndex)) {
+        const resolved = bindings.map(b => ({
+          emitterNodeId: idByIndex[b.emitterId],
+          translation: b.translation,
+          rotation: b.rotation,
+          scale: b.scale,
+        })).filter(b => !!b.emitterNodeId);
+        applyEmitterInstances(built, spec, resolved, trace);
+      }
+    }
+    // If runtime GraphSpec includes test harness emitter instances, apply them
+    if (Array.isArray(json?.__emitterInstances)) {
+      const resolved = json.__emitterInstances.map((e) => ({
+        emitterNodeId: e.emitterNodeId,
+        translation: e.translation,
+        rotation: e.rotation,
+        scale: e.scale,
+      }));
+      applyEmitterInstances(built, spec, resolved, trace);
+    }
     // Apply preset automation for musical samples
     {
       const nameKey = path.basename(abs).toLowerCase();
@@ -281,6 +306,8 @@ async function main() {
         const secPerBeat = 60 / bpm;
         const step = secPerBeat / 2;
         const barDur = 4 * secPerBeat;
+        const srLoc = spec.sampleRate || 48000;
+        const q = (t) => Math.round(t * srLoc) / srLoc;
         const bars = 2;
         const riff1 = ['E2','E2','G2','E2','D2','C2','B1', null];
         const riff2 = ['E2','E2','G2','E2','D2','C2','D2','C2'];
@@ -291,15 +318,15 @@ async function main() {
         for (let bar = 0; bar < bars; bar += 2) {
           const baseT = bar * barDur;
           for (let i = 0; i < pattern.length; i++) {
-            const t = baseT + i * step;
+            const t = q(baseT + i * step);
             const note = pattern[i];
             if (note) {
               const f = noteFreq(note);
               osc?.frequency.setValueAtTime?.(f, t);
               amp?.setValueAtTime?.(0.0, t);
-              amp?.linearRampToValueAtTime?.(0.9, t + 0.01);
-              amp?.linearRampToValueAtTime?.(0.4, t + 0.1);
-              amp?.linearRampToValueAtTime?.(0.0, t + step * 0.95);
+              amp?.linearRampToValueAtTime?.(0.9, q(t + 0.01));
+              amp?.linearRampToValueAtTime?.(0.4, q(t + 0.1));
+              amp?.linearRampToValueAtTime?.(0.0, q(t + step * 0.95));
             // skip lpf pre/post parameter automation to avoid wrapper indirection
             } else {
               amp?.setValueAtTime?.(0.0, t);

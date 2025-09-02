@@ -17,7 +17,7 @@ Gain[amp].gain.setValueAtTime(0, 0)
 createChannelMixer id=stereo
 ChannelMixer[stereo].channelCount=2
 ChannelMixer[stereo].channelInterpretation=speakers
-createEmitter id=emit -> connect(emitter.output, destination)
+createEmitterBus id=emit
 connect oscA -> mix
 connect oscB -> mix
 connect mix -> lp

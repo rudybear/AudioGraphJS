@@ -57,8 +57,7 @@ async function main() {
       }
     } else {
       if (strictWav) {
-        const skipStrict = /seven[_-]nation[_-]army/i.test(base);
-        if (skipStrict) { console.log(`OK   ${base}: traces match (wav strict skipped)`); continue; }
+        if (/seven[_-]nation[_-]army/i.test(base)) { console.log(`OK   ${base}: traces match (wav strict skipped)`); continue; }
         const { createHash } = await import('node:crypto');
         const md5 = (buf) => (createHash('md5').update(buf).digest('hex'));
         const a = fs.readFileSync(wavRun); const b = fs.readFileSync(wavKHR);

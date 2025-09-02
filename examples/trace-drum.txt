@@ -11,7 +11,7 @@ Oscillator[clickOsc].start(0)
 createGain id=clickGain
 Gain[clickGain].gain.setValueAtTime(0.500, 0)
 createAudioMixer id=mix
-createEmitter id=emit -> connect(emitter.output, destination)
+createEmitterBus id=emit
 connect bodyOsc -> bodyGain
 connect bodyGain -> mix
 connect clickOsc -> clickGain
