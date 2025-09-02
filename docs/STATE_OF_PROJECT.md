@@ -37,6 +37,7 @@ Date: 2025‑09‑01
   - Validates `extensions.KHR_audio_graph` in glTF files and runs lints (DAG, sinks, degrees/arity).
 - Comparator: `examples/compare-khr-runtime.mjs`
   - Runs matched pairs from `examples/graphs/*.json` vs `examples/graphs-khr/*-khr.json`, diffs traces (top 20 lines of diffs).
+  - Strict mode (`--strict-wav` or `STRICT_WAV=1`) compares WAV checksums and skips noise‑synth graphs.
 
 ## Examples (Aligned Pairs)
 - Core
@@ -45,6 +46,10 @@ Date: 2025‑09‑01
   - drum (kick‑style), snare, cymbal, bass, seven-nation-army (riff).
 - Each has a runtime GraphSpec JSON and a KHR container JSON with matching topology and labels.
 - Baseline traces: `examples/trace-*.txt` and `examples/trace-*_khr.txt`.
+
+## Sinks Preference
+- Adopted global emitter sinks for parity and clarity. Graphs with a single `outputs[]` entry were migrated to a global emitter (emitterType `global`), preserving connectivity.
+- Helper: `tools/update-emitters.mjs` automates this migration for both runtime and KHR graphs.
 
 ## Musical Preset Automation (Runner)
 - drum: body/click envelopes and sweeps.
@@ -95,4 +100,3 @@ Date: 2025‑09‑01
 - Runner + comparator: `examples/run-graph.mjs`, `examples/compare-khr-runtime.mjs`
 - Aligned examples: `examples/graphs/` and `examples/graphs-khr/`
 - Traces: `examples/trace-*.txt`
-
