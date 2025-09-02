@@ -1,0 +1,17 @@
+createOscillator id=oscL
+Oscillator[oscL].type=sine
+Oscillator[oscL].frequency.setValueAtTime(440, 0)
+Oscillator[oscL].start(0)
+createOscillator id=oscR
+Oscillator[oscR].type=sine
+Oscillator[oscR].frequency.setValueAtTime(880, 0)
+Oscillator[oscR].start(0)
+createChannelMerger id=merge
+createChannelSplitter id=split
+createGain id=left
+Gain[left].gain.setValueAtTime(1, 0)
+connect oscL -> merge
+connect oscR -> merge
+connect merge -> split
+connect split[out 0] -> left
+connect output sink left -> destination

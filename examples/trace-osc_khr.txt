@@ -1,0 +1,5 @@
+createOscillator id=osc
+Oscillator[osc].type=sine
+Oscillator[osc].frequency.setValueAtTime(440, 0)
+Oscillator[osc].start(0)
+connect output sink osc -> destination

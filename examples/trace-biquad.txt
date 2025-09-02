@@ -1,0 +1,11 @@
+createOscillator id=osc
+Oscillator[osc].type=sine
+Oscillator[osc].frequency.setValueAtTime(440, 0)
+Oscillator[osc].start(0)
+createBiquadFilter id=lp
+Biquad[lp].type=lowpass
+Biquad[lp].frequency.setValueAtTime(1000, 0)
+Biquad[lp].Q.setValueAtTime(0.707, 0)
+wrapBypass(dry=0, wet=1)
+connect osc -> lp
+connect output sink lp -> destination

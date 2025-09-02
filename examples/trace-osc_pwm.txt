@@ -1,0 +1,6 @@
+createOscillator id=osc
+Oscillator[osc].type=square
+Oscillator[osc].frequency.setValueAtTime(330, 0)
+Oscillator[osc].setPeriodicWave(pulseWidth=0.250)
+Oscillator[osc].start(0)
+connect output sink osc -> destination

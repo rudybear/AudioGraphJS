@@ -1,0 +1,10 @@
+createOscillator id=osc
+Oscillator[osc].type=sine
+Oscillator[osc].frequency.setValueAtTime(330, 0)
+Oscillator[osc].start(0)
+createConvolver id=conv (uri)
+Convolver[conv].normalize=true
+Convolver[conv].buffer <- uri(data:audio/wav;base64,UklGRiSWAABXQVZFZm10IBAAAAABAAEAgLsAAAB3AQ…)
+wrapBypass(dry=0, wet=1)
+connect osc -> conv
+connect output sink conv -> destination

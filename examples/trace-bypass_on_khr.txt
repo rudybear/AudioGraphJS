@@ -1,0 +1,14 @@
+createOscillator id=osc
+Oscillator[osc].type=sawtooth
+Oscillator[osc].frequency.setValueAtTime(440, 0)
+Oscillator[osc].start(0)
+createBiquadFilter id=lp
+Biquad[lp].type=lowpass
+Biquad[lp].frequency.setValueAtTime(1000, 0)
+Biquad[lp].Q.setValueAtTime(0.700, 0)
+wrapBypass(dry=0, wet=1)
+createGain id=amp
+Gain[amp].gain.setValueAtTime(0.300, 0)
+connect osc -> lp
+connect lp -> amp
+connect output sink amp -> destination

@@ -1,0 +1,9 @@
+createOscillator id=osc
+Oscillator[osc].type=sine
+Oscillator[osc].frequency.setValueAtTime(440, 0)
+Oscillator[osc].start(0)
+createChannelMixer id=mix
+ChannelMixer[mix].channelCount=2
+ChannelMixer[mix].channelInterpretation=speakers
+connect osc -> mix
+connect output sink mix -> destination

@@ -1,0 +1,4 @@
+createBufferSource id=noise (uri)
+AudioBufferSource[noise].start(0, duration=1)
+AudioBufferSource[noise].buffer <- uri(data:audio/wav;base64,UklGRiR3AQBXQVZFZm10IBAAAAABAAEAgLsAAAB3AQ…)
+connect output sink noise -> destination

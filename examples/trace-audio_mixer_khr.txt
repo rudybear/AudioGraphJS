@@ -1,0 +1,12 @@
+createOscillator id=oscA
+Oscillator[oscA].type=sine
+Oscillator[oscA].frequency.setValueAtTime(440, 0)
+Oscillator[oscA].start(0)
+createOscillator id=oscB
+Oscillator[oscB].type=sine
+Oscillator[oscB].frequency.setValueAtTime(660, 0)
+Oscillator[oscB].start(0)
+createAudioMixer id=mix
+connect oscA -> mix
+connect oscB -> mix
+connect output sink mix -> destination

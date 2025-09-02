@@ -1,0 +1,20 @@
+{
+  "extensionsUsed": ["KHR_audio_graph"],
+  "extensions": {
+    "KHR_audio_graph": {
+      "schemaVersion": "0.1",
+      "graphs": [
+        {
+          "name": "bypass-on",
+          "nodes": [
+            { "label": "osc", "kind": "source", "params": { "data": { "oscillator": { "type": 2, "frequency": 440 } }, "when": 0, "duration": 1500 } },
+            { "label": "lp", "kind": "lowpass", "params": { "frequency": 1000, "qualityFactor": 0.7, "bypass": false } },
+            { "label": "amp", "kind": "gain", "params": { "gain": 0.3 } }
+          ],
+          "connections": [ { "from": { "node": 0 }, "to": { "node": 1 } }, { "from": { "node": 1 }, "to": { "node": 2 } } ],
+          "outputs": [2]
+        }
+      ]
+    }
+  }
+}
