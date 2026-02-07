@@ -1,9 +1,12 @@
 export * from './types.js';
 export { buildGraph } from './runtime/buildGraph.js';
 export { buildGraphAsync } from './runtime/buildGraphAsync.js';
-export { lintGraph } from './runtime/lint.js';
+export { lintGraph, lintLayeredGraph } from './runtime/lint.js';
 export { debugDump } from './serialization/debugDump.js';
 export { createMemoryTrace } from './runtime/trace.js';
 export { setBypass } from './runtime/bypassControl.js';
 export { extractEmitterBindings } from './serialization/gltf-emitters.js';
-export { applyEmitterInstances } from './runtime/emitters.js';
+export { applyEmitterInstances, applyEmitterInstancesFromExtension } from './runtime/emitters.js';
+export { parseLayeredExtensions } from './serialization/parse-layered.js';
+export { applyEnvironment } from './runtime/environment.js';
+export { applyListener } from './runtime/listener.js';

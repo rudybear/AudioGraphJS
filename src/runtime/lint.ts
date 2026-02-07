@@ -1,4 +1,4 @@
-import { GraphSpec, GraphNodeSpec } from '../types.js';
+import { GraphSpec, GraphNodeSpec, KHRGraph, KHRAudioEmitterExtension } from '../types.js';
 
 export interface LintResult {
   errors: string[];
@@ -80,6 +80,91 @@ export function lintGraph(spec: GraphSpec): LintResult {
     if (!perm.has(n.id)) {
       if (visit(n.id)) { errors.push('Graph contains a cycle (must be a DAG)'); break; }
     }
+  }
+
+  return { errors, warnings };
+}
+
+export function lintLayeredGraph(
+  graph: KHRGraph,
+  audioEmitter: KHRAudioEmitterExtension,
+): LintResult {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+  const nodeCount = graph.nodes.length;
+
+  // Validate that no 'emitter' kind nodes exist in layered graphs
+  for (let i = 0; i < nodeCount; i++) {
+    if (graph.nodes[i].kind === 'emitter') {
+      errors.push(`Layered graph must not contain "emitter" kind nodes (found at index ${i})`);
+    }
+  }
+
+  // Validate graph input bindings
+  if (graph.inputs) {
+    for (const inp of graph.inputs) {
+      if (inp.source < 0 || inp.source >= audioEmitter.sources.length) {
+        errors.push(`Graph input references invalid source index ${inp.source} (sources length: ${audioEmitter.sources.length})`);
+      }
+      if (inp.node < 0 || inp.node >= nodeCount) {
+        errors.push(`Graph input references invalid node index ${inp.node} (nodes length: ${nodeCount})`);
+      }
+    }
+  }
+
+  // Validate graph output bindings
+  if (graph.outputs) {
+    for (const out of graph.outputs) {
+      if (out.emitter < 0 || out.emitter >= audioEmitter.emitters.length) {
+        errors.push(`Graph output references invalid emitter index ${out.emitter} (emitters length: ${audioEmitter.emitters.length})`);
+      }
+      if (out.node < 0 || out.node >= nodeCount) {
+        errors.push(`Graph output references invalid node index ${out.node} (nodes length: ${nodeCount})`);
+      }
+    }
+  }
+
+  // Validate connections reference valid node indices
+  for (const c of graph.connections) {
+    if (c.from.node < 0 || c.from.node >= nodeCount) {
+      errors.push(`Connection from invalid node index ${c.from.node}`);
+    }
+    if (c.to.node < 0 || c.to.node >= nodeCount) {
+      errors.push(`Connection to invalid node index ${c.to.node}`);
+    }
+  }
+
+  // Build adjacency and check for cycles (DAG)
+  const adj = new Map<number, number[]>();
+  for (let i = 0; i < nodeCount; i++) adj.set(i, []);
+  for (const c of graph.connections) {
+    if (c.from.node >= 0 && c.from.node < nodeCount) {
+      adj.get(c.from.node)!.push(c.to.node);
+    }
+  }
+  const temp = new Set<number>();
+  const perm = new Set<number>();
+  function visit(v: number): boolean {
+    if (perm.has(v)) return false;
+    if (temp.has(v)) return true;
+    temp.add(v);
+    for (const w of adj.get(v) || []) {
+      if (visit(w)) return true;
+    }
+    temp.delete(v);
+    perm.add(v);
+    return false;
+  }
+  for (let i = 0; i < nodeCount; i++) {
+    if (!perm.has(i)) {
+      if (visit(i)) { errors.push('Graph contains a cycle (must be a DAG)'); break; }
+    }
+  }
+
+  // Must have at least one sink (output binding or implicit)
+  const hasOutputs = Array.isArray(graph.outputs) && graph.outputs.length > 0;
+  if (!hasOutputs && !graph.inputs) {
+    warnings.push('Graph has no outputs[] and no inputs[]');
   }
 
   return { errors, warnings };

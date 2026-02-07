@@ -1,0 +1,22 @@
+{
+  "extensionsUsed": ["KHR_audio_emitter", "KHR_audio_graph"],
+  "extensions": {
+    "KHR_audio_emitter": {
+      "audio": [{ "uri": "GENERATE_NOISE:1:0.6" }],
+      "sources": [{ "audio": 0, "gain": 1.0, "autoplay": true }],
+      "emitters": [{ "type": "global", "gain": 0.8, "sources": [] }]
+    },
+    "KHR_audio_graph": {
+      "graphs": [{
+        "name": "filtered",
+        "nodes": [
+          { "kind": "gain", "params": { "gain": 0.5 }, "label": "vol" },
+          { "kind": "lowpass", "params": { "frequency": 2000, "qualityFactor": 1.0 }, "label": "lpf" }
+        ],
+        "connections": [{ "from": { "node": 0 }, "to": { "node": 1 } }],
+        "inputs": [{ "source": 0, "node": 0 }],
+        "outputs": [{ "node": 1, "emitter": 0 }]
+      }]
+    }
+  }
+}

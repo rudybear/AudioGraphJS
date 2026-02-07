@@ -1,0 +1,9 @@
+createOscillator id=osc
+Oscillator[osc].type=sine
+Oscillator[osc].frequency.setValueAtTime(440, 0)
+Oscillator[osc].start(0)
+createGain id=vol
+Gain[vol].gain.setValueAtTime(0.300, 0)
+createEmitterBus id=emitter_0
+connect osc -> vol
+connect vol -> emitter_0[in 0]

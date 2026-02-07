@@ -5,7 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import crypto from 'node:crypto';
 import wae from 'web-audio-engine';
-import { buildGraphAsync, createMemoryTrace, lintGraph, extractEmitterBindings, applyEmitterInstances } from '../dist/index.js';
+import { buildGraphAsync, createMemoryTrace, lintGraph, extractEmitterBindings, applyEmitterInstances, parseLayeredExtensions, applyEmitterInstancesFromExtension } from '../dist/index.js';
 
 const { OfflineAudioContext } = wae;
 const __filename = fileURLToPath(import.meta.url);
@@ -189,17 +189,32 @@ async function main() {
     const outWav = path.join(__dirname, `output-${base}.wav`);
     const outTrace = path.join(__dirname, `trace-${base}.txt`);
     const json = readJson(abs);
-    let spec; let idByIndex;
+    let spec; let idByIndex; let layeredResult;
     if (Array.isArray(json?.nodes) && Array.isArray(json?.connections)) {
+      // 1. Runtime GraphSpec (has nodes[] + connections[] at root)
       spec = json;
+    } else if (json?.extensions?.KHR_audio_emitter) {
+      // 2. Layered format (has extensions.KHR_audio_emitter)
+      layeredResult = parseLayeredExtensions(json);
+      spec = layeredResult.graphs[0];
+      // Resolve GENERATE_NOISE URIs for audio-buffer-source nodes
+      for (const n of spec.nodes) {
+        if (n.kind === 'audio-buffer-source' && n.params?.uri && typeof n.params.uri === 'string' && n.params.uri.startsWith('GENERATE_NOISE')) {
+          const parts = n.params.uri.split(':');
+          const seconds = parts[1] ? parseFloat(parts[1]) : 1.0;
+          const amp = parts[2] ? parseFloat(parts[2]) : 0.7;
+          n.params.uri = makeNoiseDataUri({ seconds, amp, seedBase: `${base}:noise` });
+        }
+      }
     } else if (json?.extensions?.KHR_audio_graph) {
+      // 3. Legacy KHR (has extensions.KHR_audio_graph without KHR_audio_emitter)
       const ext = json.extensions.KHR_audio_graph;
       const seedBase = base.replace(/_khr$/, '');
       const mapped = mapKHRToRuntime(ext, ext.graphs[0], seedBase);
       spec = mapped.spec;
       idByIndex = mapped.idByIndex;
     } else {
-      throw new Error('Unsupported input JSON: expected runtime GraphSpec or KHR container');
+      throw new Error('Unsupported input JSON: expected runtime GraphSpec, layered (KHR_audio_emitter), or legacy KHR container');
     }
     // For runtime GraphSpec without IR on convolver, synthesize an IR so traces align with KHR mapping
     if (Array.isArray(spec.nodes)) {
@@ -226,8 +241,21 @@ async function main() {
     const ctx = new OfflineAudioContext(2, sr * 2, sr);
     const trace = createMemoryTrace();
     const built = await buildGraphAsync(ctx, spec, trace);
-    // If input was a glTF with node-level emitter bindings, expand instances now
-    if (json?.nodes && json?.extensions?.KHR_audio_graph) {
+    // If input was a layered format, expand emitter instances from parsed result
+    if (layeredResult && layeredResult.emitterBindings.length > 0) {
+      const audioEmitter = layeredResult.audioEmitter;
+      const resolved = layeredResult.emitterBindings.map(b => ({
+        emitterNodeId: `emitter_${b.emitterId}`,
+        emitter: audioEmitter.emitters[b.emitterId],
+        translation: b.translation,
+        rotation: b.rotation,
+        scale: b.scale,
+      })).filter(b => !!b.emitter);
+      const spatModel = layeredResult.listener?.listener?.spatializationModel;
+      applyEmitterInstancesFromExtension(built, resolved, spatModel, trace);
+    }
+    // If input was a legacy glTF with node-level emitter bindings, expand instances now
+    if (json?.nodes && json?.extensions?.KHR_audio_graph && !json?.extensions?.KHR_audio_emitter) {
       const bindings = extractEmitterBindings(json);
       if (bindings.length > 0 && Array.isArray(idByIndex)) {
         const resolved = bindings.map(b => ({

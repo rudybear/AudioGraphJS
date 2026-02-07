@@ -5,19 +5,37 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AudioGraphJS Demo</title>
     <style>
-      body { font-family: system-ui, sans-serif; padding: 2rem; }
-      button { font-size: 1rem; padding: 0.5rem 1rem; margin-right: 1rem; }
-      .row { margin: 1rem 0; }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body { font-family: system-ui, -apple-system, sans-serif; background: #0f0f0f; color: #e0e0e0; padding: 1.5rem; }
+      h1 { font-size: 1.4rem; margin-bottom: 0.3rem; color: #fff; }
+      .subtitle { color: #888; font-size: 0.85rem; margin-bottom: 1.5rem; }
+      .controls { position: sticky; top: 0; background: #0f0f0f; padding: 0.5rem 0 1rem; z-index: 10; border-bottom: 1px solid #222; margin-bottom: 1rem; }
+      #stopBtn { font-size: 0.9rem; padding: 0.4rem 1.2rem; background: #c0392b; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+      #stopBtn:disabled { opacity: 0.3; cursor: default; }
+      #nowPlaying { display: inline-block; margin-left: 1rem; color: #2ecc71; font-size: 0.85rem; }
+      .category { margin-bottom: 1.2rem; }
+      .category h2 { font-size: 0.95rem; color: #aaa; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.4rem; padding-bottom: 0.2rem; border-bottom: 1px solid #222; }
+      .grid { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+      .grid button {
+        font-size: 0.8rem; padding: 0.35rem 0.7rem; border: 1px solid #333; border-radius: 4px;
+        background: #1a1a1a; color: #ccc; cursor: pointer; transition: all 0.15s;
+      }
+      .grid button:hover { background: #2a2a2a; border-color: #555; color: #fff; }
+      .grid button.playing { background: #1a472a; border-color: #2ecc71; color: #2ecc71; }
+      .grid button.layered { border-color: #2980b9; }
+      .grid button.layered:hover { border-color: #3498db; }
+      #log { margin-top: 1rem; font-family: 'SF Mono', monospace; font-size: 0.75rem; color: #666; max-height: 120px; overflow-y: auto; white-space: pre-wrap; }
     </style>
   </head>
   <body>
     <h1>AudioGraphJS Browser Demo</h1>
-    <p>Sine 220 Hz → Gain(0.2) → Lowpass(2 kHz) → Delay(100 ms)</p>
-    <div class="row">
-      <button id="playBtn">Play</button>
+    <p class="subtitle">Click any example to play it in real-time. <span style="color:#2980b9">Blue border</span> = layered format (KHR_audio_emitter).</p>
+    <div class="controls">
       <button id="stopBtn" disabled>Stop</button>
+      <span id="nowPlaying"></span>
     </div>
+    <div id="categories"></div>
+    <div id="log"></div>
     <script type="module" src="./main.js"></script>
   </body>
-  </html>
-
+</html>

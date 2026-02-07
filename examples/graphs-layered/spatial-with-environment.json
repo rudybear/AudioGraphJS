@@ -1,0 +1,75 @@
+{
+  "asset": { "version": "2.0" },
+  "extensionsUsed": ["KHR_audio_emitter", "KHR_audio_graph", "KHR_audio_environment"],
+  "extensions": {
+    "KHR_audio_emitter": {
+      "audio": [{ "uri": "GENERATE_NOISE:1:0.5" }],
+      "sources": [{ "audio": 0, "gain": 1.0, "autoplay": true }],
+      "emitters": [{
+        "type": "positional",
+        "gain": 0.8,
+        "sources": [],
+        "positional": {
+          "shapeType": "omnidirectional",
+          "distanceModel": "inverse",
+          "refDistance": 1.0,
+          "maxDistance": 50.0,
+          "rolloffFactor": 1.0
+        }
+      }]
+    },
+    "KHR_audio_graph": {
+      "graphs": [{
+        "name": "spatial-filtered",
+        "nodes": [
+          { "kind": "gain", "params": { "gain": 0.6 }, "label": "vol" },
+          { "kind": "lowpass", "params": { "frequency": 4000, "qualityFactor": 0.7 }, "label": "lpf" }
+        ],
+        "connections": [{ "from": { "node": 0 }, "to": { "node": 1 } }],
+        "inputs": [{ "source": 0, "node": 0 }],
+        "outputs": [{ "node": 1, "emitter": 0 }]
+      }]
+    },
+    "KHR_audio_environment": {
+      "listeners": [{
+        "name": "Player",
+        "spatializationModel": "HRTF",
+        "interauralDistance": 0.17
+      }],
+      "environments": [{
+        "name": "Room",
+        "reverb": {
+          "type": "parametric",
+          "mix": 0.3,
+          "roomSize": 10.0,
+          "reflectivity": 0.5,
+          "decayTime": 1.5,
+          "earlyReflections": 8
+        }
+      }]
+    }
+  },
+  "scenes": [{
+    "name": "Main",
+    "nodes": [0, 1],
+    "extensions": {
+      "KHR_audio_environment": { "environment": 0 }
+    }
+  }],
+  "nodes": [
+    {
+      "name": "PlayerCamera",
+      "camera": 0,
+      "extensions": {
+        "KHR_audio_environment": { "listener": 0 }
+      }
+    },
+    {
+      "name": "SoundSource",
+      "translation": [5.0, 0.0, 3.0],
+      "extensions": {
+        "KHR_audio_emitter": { "emitters": [0] }
+      }
+    }
+  ]
+}

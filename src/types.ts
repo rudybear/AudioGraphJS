@@ -50,3 +50,248 @@ export interface BuiltGraph {
   _outputs?: Map<NodeId, AudioNode>;
   _bypass?: Map<NodeId, { dry: GainNode; wet: GainNode }>;
 }
+
+// ---------------------------------------------------------------------------
+// KHR_audio_emitter — base layer types
+// ---------------------------------------------------------------------------
+
+export interface AudioEmitterEncodingProperties {
+  sampleRate: number;
+  channels: number;
+  bitsPerSample?: number;
+  duration?: number;
+  samples?: number;
+}
+
+export interface AudioEmitterAudioData {
+  uri?: string;
+  mimeType?: string;
+  bufferView?: number;
+  extensions?: {
+    KHR_audio_graph?: {
+      encoding?: AudioEmitterEncodingProperties;
+    };
+    [key: string]: unknown;
+  };
+  extras?: unknown;
+}
+
+export interface AudioEmitterSource {
+  audio: number;
+  gain?: number;
+  autoplay?: boolean;
+  loop?: boolean;
+  playbackRate?: number;
+  extensions?: {
+    KHR_audio_graph?: {
+      loopStart?: number;
+      loopEnd?: number;
+      offset?: number;
+      when?: number;
+      duration?: number;
+      priority?: number;
+      state?: 'playing' | 'paused' | 'stopped';
+      channelInterpretation?: 'speakers' | 'discrete';
+    };
+    [key: string]: unknown;
+  };
+  extras?: unknown;
+}
+
+export interface AudioEmitterPositional {
+  shapeType?: 'omnidirectional' | 'cone';
+  distanceModel?: 'linear' | 'inverse' | 'exponential' | 'custom';
+  refDistance?: number;
+  maxDistance?: number;
+  rolloffFactor?: number;
+  coneInnerAngle?: number;
+  coneOuterAngle?: number;
+  coneOuterGain?: number;
+  extensions?: {
+    KHR_audio_environment?: {
+      spatializationModel?: 'equalpower' | 'HRTF' | 'custom';
+      distanceCurve?: number[];
+    };
+    [key: string]: unknown;
+  };
+}
+
+export interface AudioEmitter {
+  type: 'positional' | 'global';
+  gain?: number;
+  sources?: number[];
+  positional?: AudioEmitterPositional;
+  name?: string;
+  extensions?: Record<string, unknown>;
+  extras?: unknown;
+}
+
+export interface KHRAudioEmitterExtension {
+  audio: AudioEmitterAudioData[];
+  sources: AudioEmitterSource[];
+  emitters: AudioEmitter[];
+}
+
+// ---------------------------------------------------------------------------
+// KHR_audio_graph — processing graph layer types
+// ---------------------------------------------------------------------------
+
+export interface GraphInput {
+  source: number;
+  node: number;
+  input?: number;
+}
+
+export interface GraphOutput {
+  node: number;
+  output?: number;
+  emitter: number;
+}
+
+export interface KHRGraphNodeSpec {
+  kind: string;
+  params: Record<string, unknown>;
+  label?: string;
+  bypass?: boolean;
+}
+
+export interface KHRGraphConnection {
+  from: { node: number; output?: number };
+  to: { node: number; input?: number };
+}
+
+export interface KHRGraph {
+  name?: string;
+  nodes: KHRGraphNodeSpec[];
+  connections: KHRGraphConnection[];
+  inputs?: GraphInput[];
+  outputs?: GraphOutput[];
+}
+
+export interface KHRAudioGraphExtension {
+  graphs: KHRGraph[];
+}
+
+// ---------------------------------------------------------------------------
+// KHR_audio_environment — listener / reverb / spatialization layer types
+// ---------------------------------------------------------------------------
+
+export interface HRTFConfig {
+  audio?: number;
+  profile?: 'generic' | 'small' | 'medium' | 'large';
+}
+
+export interface Listener {
+  name?: string;
+  spatializationModel?: 'equalpower' | 'HRTF' | 'custom';
+  hrtf?: HRTFConfig;
+  interauralDistance?: number;
+  extensions?: Record<string, unknown>;
+  extras?: unknown;
+}
+
+export interface ReverbProperties {
+  type?: 'parametric' | 'impulseResponse';
+  mix?: number;
+  roomSize?: number;
+  reflectivity?: number;
+  reflectivityHigh?: number;
+  reflectivityLow?: number;
+  earlyReflections?: number;
+  earlyReflectionsGain?: number;
+  diffusionGain?: number;
+  reflectionDelay?: number;
+  reverbDelay?: number;
+  decayTime?: number;
+  audio?: number;
+}
+
+export interface Environment {
+  name?: string;
+  reverb?: ReverbProperties;
+  extensions?: Record<string, unknown>;
+  extras?: unknown;
+}
+
+export interface KHRAudioEnvironmentExtension {
+  listeners?: Listener[];
+  environments?: Environment[];
+}
+
+// ---------------------------------------------------------------------------
+// Unified glTF document type
+// ---------------------------------------------------------------------------
+
+export interface GltfNode {
+  name?: string;
+  camera?: number;
+  translation?: [number, number, number];
+  rotation?: [number, number, number, number];
+  scale?: [number, number, number];
+  children?: number[];
+  extensions?: {
+    KHR_audio_emitter?: { emitter?: number; emitters?: number[] };
+    KHR_audio_environment?: { listener?: number; environment?: number };
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
+export interface GltfScene {
+  name?: string;
+  nodes?: number[];
+  extensions?: {
+    KHR_audio_emitter?: { emitters?: number[] };
+    KHR_audio_environment?: { environment?: number };
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
+export interface GltfDocument {
+  asset?: { version?: string; [key: string]: unknown };
+  extensionsUsed?: string[];
+  extensions?: {
+    KHR_audio_emitter?: KHRAudioEmitterExtension;
+    KHR_audio_graph?: KHRAudioGraphExtension;
+    KHR_audio_environment?: KHRAudioEnvironmentExtension;
+    [key: string]: unknown;
+  };
+  scenes?: GltfScene[];
+  nodes?: GltfNode[];
+  [key: string]: unknown;
+}
+
+// ---------------------------------------------------------------------------
+// parseLayeredExtensions result type
+// ---------------------------------------------------------------------------
+
+export interface LayeredParseResult {
+  /** Runtime graph specs (one per KHR_audio_graph graph, or one for emitter-only) */
+  graphs: GraphSpec[];
+  /** Emitter binding info extracted from glTF nodes */
+  emitterBindings: {
+    nodeIndex: number;
+    emitterId: number;
+    translation?: [number, number, number];
+    rotation?: [number, number, number, number];
+    scale?: [number, number, number];
+  }[];
+  /** Listener info extracted from KHR_audio_environment on nodes */
+  listener?: {
+    listener: Listener;
+    nodeIndex: number;
+    transform?: {
+      translation?: [number, number, number];
+      rotation?: [number, number, number, number];
+      scale?: [number, number, number];
+    };
+  };
+  /** Environment info extracted from KHR_audio_environment on scenes */
+  environment?: {
+    environment: Environment;
+    sceneIndex: number;
+  };
+  /** The raw audio_emitter extension for reference */
+  audioEmitter: KHRAudioEmitterExtension;
+}

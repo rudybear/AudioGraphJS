@@ -1,0 +1,14 @@
+createBufferSource id=src_0_g0 (uri)
+AudioBufferSource[src_0_g0].start(0)
+AudioBufferSource[src_0_g0].buffer <- uri(data:audio/wav;base64,UklGRiR3AQBXQVZFZm10IBAAAAABAAEAgLsAAAB3AQ…)
+createGain id=vol
+Gain[vol].gain.setValueAtTime(0.500, 0)
+createBiquadFilter id=lpf
+Biquad[lpf].type=lowpass
+Biquad[lpf].frequency.setValueAtTime(2000, 0)
+Biquad[lpf].Q.setValueAtTime(1, 0)
+wrapBypass(dry=0, wet=1)
+createEmitterBus id=emitter_0
+connect src_0_g0[out 0] -> vol[in 0]
+connect vol -> lpf
+connect lpf -> emitter_0[in 0]

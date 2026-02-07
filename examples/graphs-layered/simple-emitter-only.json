@@ -1,0 +1,11 @@
+{
+  "extensionsUsed": ["KHR_audio_emitter"],
+  "extensions": {
+    "KHR_audio_emitter": {
+      "audio": [{ "uri": "GENERATE_NOISE:1:0.5" }],
+      "sources": [{ "audio": 0, "gain": 0.5, "autoplay": true }],
+      "emitters": [{ "type": "global", "gain": 1.0, "sources": [0] }]
+    }
+  },
+  "scenes": [{ "extensions": { "KHR_audio_emitter": { "emitters": [0] } } }]
+}

@@ -1,4 +1,4 @@
-import type { BuiltGraph, GraphSpec, GraphNodeSpec } from '../types.js';
+import type { BuiltGraph, GraphSpec, GraphNodeSpec, AudioEmitter } from '../types.js';
 import type { TraceLogger } from './trace.js';
 
 export interface ResolvedEmitterBinding {
@@ -85,6 +85,79 @@ export function applyEmitterInstances(
       bus.connect(postGain);
       trace?.log?.(`createEmitterInstance id=${b.emitterNodeId} -> gain -> destination`);
     }
+    postGain.connect(ctx.destination);
+  }
+}
+
+export interface ExtensionEmitterBinding {
+  emitterNodeId: string;
+  emitter: AudioEmitter;
+  translation?: [number, number, number];
+  rotation?: [number, number, number, number];
+  scale?: [number, number, number];
+}
+
+export function applyEmitterInstancesFromExtension(
+  built: BuiltGraph,
+  bindings: ExtensionEmitterBinding[],
+  defaultSpatializationModel?: string,
+  trace?: TraceLogger,
+) {
+  const ctx = built.context as any;
+  const inputs = built._inputs!;
+
+  for (const b of bindings) {
+    const bus = inputs.get(b.emitterNodeId);
+    if (!bus) { trace?.log?.(`warn: emitter bus not found for ${b.emitterNodeId}`); continue; }
+
+    const emitter = b.emitter;
+    const postGain: GainNode = ctx.createGain();
+    if (typeof emitter.gain === 'number') postGain.gain.value = emitter.gain;
+
+    if (emitter.type === 'positional') {
+      const pan: PannerNode = ctx.createPanner();
+      const pos = emitter.positional;
+
+      // Panning model: use emitter-level override, then listener default, then equalpower
+      const emitterSpatModel = pos?.extensions?.KHR_audio_environment?.spatializationModel;
+      const spatModel = emitterSpatModel ?? defaultSpatializationModel ?? 'equalpower';
+      pan.panningModel = spatModel === 'HRTF' ? 'HRTF' : 'equalpower';
+
+      if (pos) {
+        if (pos.distanceModel && pos.distanceModel !== 'custom') {
+          (pan as any).distanceModel = pos.distanceModel;
+        }
+        if (typeof pos.refDistance === 'number') pan.refDistance = pos.refDistance;
+        if (typeof pos.maxDistance === 'number') pan.maxDistance = pos.maxDistance;
+        if (typeof pos.rolloffFactor === 'number') pan.rolloffFactor = pos.rolloffFactor;
+        if (typeof pos.coneInnerAngle === 'number') pan.coneInnerAngle = pos.coneInnerAngle;
+        if (typeof pos.coneOuterAngle === 'number') pan.coneOuterAngle = pos.coneOuterAngle;
+        if (typeof pos.coneOuterGain === 'number') pan.coneOuterGain = pos.coneOuterGain;
+      }
+
+      // Apply transform
+      if (b.translation && (pan as any).positionX) {
+        (pan as any).positionX.setValueAtTime(b.translation[0], built.context.currentTime);
+        (pan as any).positionY.setValueAtTime(b.translation[1], built.context.currentTime);
+        (pan as any).positionZ.setValueAtTime(b.translation[2], built.context.currentTime);
+      }
+      if (b.rotation) {
+        const fwd = rotateVecByQuat([0, 0, -1], b.rotation);
+        if ((pan as any).orientationX) {
+          (pan as any).orientationX.setValueAtTime(fwd[0], built.context.currentTime);
+          (pan as any).orientationY.setValueAtTime(fwd[1], built.context.currentTime);
+          (pan as any).orientationZ.setValueAtTime(fwd[2], built.context.currentTime);
+        }
+      }
+
+      bus.connect(pan);
+      pan.connect(postGain);
+      trace?.log?.(`createEmitterInstanceExt id=${b.emitterNodeId} -> panner+gain -> destination`);
+    } else {
+      bus.connect(postGain);
+      trace?.log?.(`createEmitterInstanceExt id=${b.emitterNodeId} -> gain -> destination`);
+    }
+
     postGain.connect(ctx.destination);
   }
 }
