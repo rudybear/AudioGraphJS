@@ -20,7 +20,8 @@
       "id": "snareNoise",
       "kind": "audio-buffer-source",
       "params": {
-        "startTime": 0
+        "startTime": 0,
+        "loop": true
       }
     },
     {
