@@ -269,6 +269,18 @@ export function parseLayeredExtensions(gltf: GltfDocument): LayeredParseResult {
     }
   }
 
+  // Extract scene-level emitter bindings for global emitters.
+  const gltfScenes = gltf.scenes || [];
+  for (let i = 0; i < gltfScenes.length; i++) {
+    const sceneEmitterExt = gltfScenes[i].extensions?.KHR_audio_emitter;
+    if (!sceneEmitterExt?.emitters) continue;
+    for (const emitterId of sceneEmitterExt.emitters) {
+      if (typeof emitterId === 'number') {
+        emitterBindings.push({ sceneIndex: i, emitterId });
+      }
+    }
+  }
+
   // Extract listener from KHR_audio_environment on nodes
   let listenerResult: LayeredParseResult['listener'];
   if (audioEnv?.listeners) {
@@ -316,5 +328,80 @@ export function parseLayeredExtensions(gltf: GltfDocument): LayeredParseResult {
     listener: listenerResult,
     environment: environmentResult,
     audioEmitter,
+  };
+}
+
+export function mergeGraphSpecs(specs: GraphSpec[]): GraphSpec {
+  if (specs.length === 0) {
+    return { nodes: [], connections: [] };
+  }
+  if (specs.length === 1) {
+    return specs[0];
+  }
+
+  const nodes: GraphNodeSpec[] = [];
+  const connections: GraphConnectionSpec[] = [];
+  const outputs: string[] = [];
+  const emitterNodes = new Map<string, GraphNodeSpec>();
+
+  function mapNodeId(specIndex: number, node: GraphNodeSpec): string {
+    if (node.kind === 'emitter') {
+      return node.id;
+    }
+    return `g${specIndex}__${node.id}`;
+  }
+
+  for (let specIndex = 0; specIndex < specs.length; specIndex++) {
+    const spec = specs[specIndex];
+    const idMap = new Map<string, string>();
+
+    for (const node of spec.nodes) {
+      const mappedId = mapNodeId(specIndex, node);
+      idMap.set(node.id, mappedId);
+
+      if (node.kind === 'emitter') {
+        const existing = emitterNodes.get(mappedId);
+        if (!existing) {
+          const cloned = { ...node, params: node.params ? { ...node.params } : undefined };
+          emitterNodes.set(mappedId, cloned);
+          nodes.push(cloned);
+        }
+        continue;
+      }
+
+      nodes.push({
+        ...node,
+        id: mappedId,
+        params: node.params ? { ...node.params } : undefined,
+      });
+    }
+
+    for (const connection of spec.connections) {
+      connections.push({
+        from: {
+          node: idMap.get(connection.from.node) ?? connection.from.node,
+          output: connection.from.output,
+        },
+        to: {
+          node: idMap.get(connection.to.node) ?? connection.to.node,
+          input: connection.to.input,
+        },
+      });
+    }
+
+    if (spec.outputs) {
+      for (const output of spec.outputs) {
+        const mappedOutput = idMap.get(output) ?? output;
+        if (!outputs.includes(mappedOutput)) {
+          outputs.push(mappedOutput);
+        }
+      }
+    }
+  }
+
+  return {
+    nodes,
+    connections,
+    outputs: outputs.length > 0 ? outputs : undefined,
   };
 }

@@ -1,47 +1,39 @@
-﻿# KHR_audio_graph Node Mapping (Tracking)
+# Layered Audio Runtime Mapping
 
-- Source → AudioBufferSourceNode (implemented)
-  - id, data(audio|osc), priority, gain, state, autoPlay, loop, loopStart(ms), loopEnd(ms), playbackSpeed, duration(ms), offset(ms), when(s), channelInterpretation
-- Audio Data (partial)
-  - bufferView, uri, mimeType, encodingProperties(bitsPerSample, duration, samples, sampleRate, channels)
-- Oscillator Data → OscillatorNode (implemented)
-  - type, frequency, pulseWidth (static via PeriodicWave; no modulation)
-- Emitter (implemented)
-  - id, emitterType(global|spatial), gain, spatialProperties(spatializationModel, attenuation)
-  - Maps to GainNode + (PannerNode/StereoPanner)
-- Listener → AudioListener (skipped)
+- `KHR_audio_emitter.audio[]`
+  - asset-level audio payloads
+  - optional `KHR_audio_graph.encoding` metadata
 
-Processors
-- Gain → GainNode (implemented)
-  - gain, interpolation, duration(ms)
-- Delay → DelayNode (implemented)
-  - delayTime(ms)
-- Pitch Shifter (deferred)
-  - pitch(semitones)
-- Channel Splitter → ChannelSplitterNode (implemented)
-- Channel Merger → ChannelMergerNode (implemented)
-- Channel Mixer → GainNode with channelCount (implemented)
-  - outputChannels
-- Audio Mixer (composite) (not_implemented)
-- Audio Mixer → GainNode (summing) (implemented)
-- Filters (implemented via BiquadFilterNode)
-  - lowpass: frequency, qualityFactor, bypass
-  - highpass: frequency, qualityFactor, bypass
-  - bandpass: frequency, qualityFactor, bypass
-  - lowshelf: frequency, gain, bypass
-  - highshelf: frequency, gain, bypass
-  - peaking: frequency, qualityFactor, gain, bypass
-  - notch: frequency, qualityFactor, bypass
-  - allpass: frequency, qualityFactor, bypass
-- Reverb (IR-based) (implemented)
-  - ConvolverNode + wet/dry mix; algorithmic parameters out of scope for now
+- `KHR_audio_emitter.sources[]`
+  - maps to runtime audio-buffer-source setup
+  - extended playback fields from `extensions.KHR_audio_graph`
 
-Notes
-- Unit conversions: ms ↔ s for Delay/Source timing.
-- Bypass: requires routing toggle; not native on Web Audio nodes.
- - Bypass: supported two ways — build-time rewiring (spec JSON) and runtime toggling via wrapper (setBypass). For filters/delay/convolver/waveshaper, graphs are built with a dry/wet wrapper for runtime bypass.
-- Pitch shifter & Reverb: require custom DSP or Worklets; not standard nodes.
-- Spatialization: Emitter maps to PannerNode; listener bound to camera.
- - Gain smoothing: honors `interpolation` (linear/custom) + `duration` (ms) when provided.
+- `KHR_audio_emitter.emitters[]`
+  - maps to shared runtime emitter buses
+  - `type: global` -> gain-only output instance
+  - `type: positional` -> panner plus post-gain output instance
 
-See docs/KHR_AUDIO_GRAPH_NODE_MAP.json for machine-readable detail.
+- `KHR_audio_graph.graphs[]`
+  - parsed individually, then merged for execution
+  - shared emitter targets remain shared across merged graphs
+  - when multiple outputs target the same emitter, signals are summed by default
+
+- `KHR_audio_environment.listeners[]`
+  - maps to `AudioListener`
+  - transform comes from the bound glTF node
+
+- `KHR_audio_environment.environments[]`
+  - scene-level environment currently supported
+  - reverb is implemented through a real wet/dry environment bus
+
+## Important Conversions
+
+- glTF time in the layered runtime path is interpreted in seconds
+- glTF cone angles are interpreted in radians
+- Web Audio panner cone angles use degrees, so the runtime converts radians to degrees
+
+## Current Non-Goals
+
+- node-localized environment zones
+- `KHR_animation_pointer` integration
+- full spec-sync cleanup of older historical notes

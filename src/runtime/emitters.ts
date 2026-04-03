@@ -8,6 +8,10 @@ export interface ResolvedEmitterBinding {
   scale?: [number, number, number];
 }
 
+function radiansToDegrees(angleRadians: number): number {
+  return angleRadians * (180 / Math.PI);
+}
+
 // Minimal quat->forward vector util (glTF convention: forward = [0,0,-1])
 function rotateVecByQuat(v: [number, number, number], q: [number, number, number, number]): [number, number, number] {
   const [x, y, z, w] = q;
@@ -28,10 +32,12 @@ export function applyEmitterInstances(
   built: BuiltGraph,
   spec: GraphSpec,
   bindings: ResolvedEmitterBinding[],
-  trace?: TraceLogger
+  trace?: TraceLogger,
+  destination?: AudioNode
 ) {
   const ctx = built.context as any;
   const inputs = built._inputs!;
+  const targetDestination = destination ?? ctx.destination;
 
   for (const b of bindings) {
     const bus = inputs.get(b.emitterNodeId);
@@ -54,8 +60,8 @@ export function applyEmitterInstances(
       if (typeof att.refDistance === 'number') pan.refDistance = att.refDistance;
       if (typeof att.maxDistance === 'number') pan.maxDistance = att.maxDistance;
       if (typeof att.rolloffFactor === 'number') pan.rolloffFactor = att.rolloffFactor;
-      if (typeof att.coneInnerAngle === 'number') pan.coneInnerAngle = att.coneInnerAngle;
-      if (typeof att.coneOuterAngle === 'number') pan.coneOuterAngle = att.coneOuterAngle;
+      if (typeof att.coneInnerAngle === 'number') pan.coneInnerAngle = radiansToDegrees(att.coneInnerAngle);
+      if (typeof att.coneOuterAngle === 'number') pan.coneOuterAngle = radiansToDegrees(att.coneOuterAngle);
       if (typeof att.coneOuterGain === 'number') pan.coneOuterGain = att.coneOuterGain;
       // Apply transform: position from translation; orientation from rotation
       if (b.translation && (pan as any).positionX) {
@@ -85,7 +91,7 @@ export function applyEmitterInstances(
       bus.connect(postGain);
       trace?.log?.(`createEmitterInstance id=${b.emitterNodeId} -> gain -> destination`);
     }
-    postGain.connect(ctx.destination);
+    postGain.connect(targetDestination);
   }
 }
 
@@ -102,9 +108,11 @@ export function applyEmitterInstancesFromExtension(
   bindings: ExtensionEmitterBinding[],
   defaultSpatializationModel?: string,
   trace?: TraceLogger,
+  destination?: AudioNode,
 ) {
   const ctx = built.context as any;
   const inputs = built._inputs!;
+  const targetDestination = destination ?? ctx.destination;
 
   for (const b of bindings) {
     const bus = inputs.get(b.emitterNodeId);
@@ -130,8 +138,8 @@ export function applyEmitterInstancesFromExtension(
         if (typeof pos.refDistance === 'number') pan.refDistance = pos.refDistance;
         if (typeof pos.maxDistance === 'number') pan.maxDistance = pos.maxDistance;
         if (typeof pos.rolloffFactor === 'number') pan.rolloffFactor = pos.rolloffFactor;
-        if (typeof pos.coneInnerAngle === 'number') pan.coneInnerAngle = pos.coneInnerAngle;
-        if (typeof pos.coneOuterAngle === 'number') pan.coneOuterAngle = pos.coneOuterAngle;
+        if (typeof pos.coneInnerAngle === 'number') pan.coneInnerAngle = radiansToDegrees(pos.coneInnerAngle);
+        if (typeof pos.coneOuterAngle === 'number') pan.coneOuterAngle = radiansToDegrees(pos.coneOuterAngle);
         if (typeof pos.coneOuterGain === 'number') pan.coneOuterGain = pos.coneOuterGain;
       }
 
@@ -158,6 +166,6 @@ export function applyEmitterInstancesFromExtension(
       trace?.log?.(`createEmitterInstanceExt id=${b.emitterNodeId} -> gain -> destination`);
     }
 
-    postGain.connect(ctx.destination);
+    postGain.connect(targetDestination);
   }
 }

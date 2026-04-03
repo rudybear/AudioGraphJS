@@ -1,33 +1,33 @@
-# Plan & Status — Listener/Emitter Spec + Parser
+# Plan And Status
 
-Status: in progress
+Status: current layered runtime milestone complete
 
-Phases
+## Completed
 
-- [x] Docs: Complex Graph (USAGE section)
-- [ ] Spec: Listener language (README; KHR_animation_pointer TODO)
-- [ ] Spec: Emitter → Node binding (README + node-level extension schema)
-- [ ] Spec: Commit + spec validation (no example breakage)
-- [ ] Runtime: glTF parser for emitter bindings (separate class/file)
-- [ ] Test: Focused spatial emitter parity (one case; identical transforms)
-- [ ] Docs: Spatial Emitter Binding (USAGE) + STATE_OF_PROJECT update
+- layered parser for `KHR_audio_emitter`, `KHR_audio_graph`, and `KHR_audio_environment`
+- node-level and scene-level emitter binding extraction
+- merged execution for multiple layered graphs
+- additive default mixing on shared emitter buses
+- listener application in the runner
+- scene-level environment routing in the runner
+- radians-to-degrees conversion for positional emitter cone angles
+- layered validator wildcard support
+- real glTF fixture tests for layered examples
 
-Listener — Scope (this pass)
-- Not a graph node; scene/node-level concept; single Listener per scene.
-- KHR_animation_pointer applicability is deferred (TODO). We will specify accessible properties and pointer paths in a later pass.
+## Current Scope
 
-Emitter Binding — Node-level (this pass)
-- Do not add node ids inside graph emitter objects.
-- Bind emitters at glTF node level via a node extension:
-  - Scalar form: `extensions.KHR_audio_graph = { "emitter": <emitterId> }`
-  - Array form: `extensions.KHR_audio_graph = { "emitters": [<emitterId>, ...] }`
-- Each glTF node creates instances for each referenced emitter id. Multiple nodes may reference the same emitter id.
-- Runtime optimization: share upstream audio graph routing; instantiate only the final per-instance spatial stage (PannerNode and any post‑panner gain).
+- layered format is the preferred implementation path
+- legacy `KHR_audio_graph` runner support remains for compatibility only
+- scene-level environment is supported
+- node-localized environment zones are deferred
 
-Parser (this pass)
-- Separate glTF parser external to audio graph parsing.
-- For examples, read node transforms (translation/rotation/scale) “as is” — no world/hierarchy computation.
+## Open Items
 
-Test (next step)
-- Add one focused spatial emitter test to compare KHR-bound instances vs a native baseline with identical transforms.
+- `KHR_animation_pointer` integration
+- node-localized environment zones and overlap rules
+- additional layered fixture coverage for more complex mixed assets
 
+## Reviewer Notes
+
+- informative runtime behavior now explicitly supports default signal summing when multiple graph outputs target the same emitter
+- this should be mirrored in spec prose as informative guidance, not as hidden implementation behavior

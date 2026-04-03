@@ -5,6 +5,19 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+function expandInput(arg) {
+  if (!arg.includes('*')) return [arg];
+  const normalized = path.resolve(arg);
+  const dir = path.dirname(normalized);
+  const pattern = path.basename(normalized)
+    .replace(/[.+^${}()|[\]\\]/g, '\\$&')
+    .replace(/\*/g, '.*');
+  const regex = new RegExp(`^${pattern}$`);
+  return fs.readdirSync(dir)
+    .filter((entry) => regex.test(entry))
+    .map((entry) => path.join(dir, entry));
+}
+
 function validateAudioEmitter(ext) {
   const errors = [];
   if (!Array.isArray(ext.audio)) errors.push('KHR_audio_emitter.audio must be an array');
@@ -132,7 +145,7 @@ function validateEnvironment(ext) {
 }
 
 function main() {
-  const files = process.argv.slice(2);
+  const files = process.argv.slice(2).flatMap(expandInput);
   if (files.length === 0) {
     console.log('Usage: node tools/spec-validate/validate-layered.mjs <file1.json> [file2.json ...]');
     process.exit(1);

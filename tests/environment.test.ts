@@ -60,12 +60,13 @@ describe('applyEnvironment', () => {
     };
     const trace = { log: vi.fn(), getLines: () => [] };
 
-    await applyEnvironment(ctx, env, built, undefined, undefined, trace);
+    const input = await applyEnvironment(ctx, env, built, undefined, undefined, trace);
 
-    // Should have created gain nodes for dry/wet/output + delay
+    // Should have created input + dry/wet/output gains plus delay
     expect(ctx.createGain).toHaveBeenCalled();
     expect(ctx.createDelay).toHaveBeenCalled();
     expect((built as any)._environment).toBeDefined();
+    expect(input).toBe((built as any)._environment.input);
     expect(trace.log).toHaveBeenCalled();
   });
 
@@ -87,10 +88,11 @@ describe('applyEnvironment', () => {
     const fakeBuffer = {} as AudioBuffer;
     const loadBuffer = vi.fn().mockResolvedValue(fakeBuffer);
 
-    await applyEnvironment(ctx, env, built, audioEmitter, loadBuffer);
+    const input = await applyEnvironment(ctx, env, built, audioEmitter, loadBuffer);
 
     expect(ctx.createConvolver).toHaveBeenCalled();
     expect(loadBuffer).toHaveBeenCalledWith('ir.wav', ctx);
+    expect(input).toBe((built as any)._environment.input);
   });
 
   it('wet/dry mix: dry gain = 1-mix, wet gain = mix', async () => {
@@ -108,11 +110,27 @@ describe('applyEnvironment', () => {
 
     await applyEnvironment(ctx, env, built);
 
-    // First gain is dry, second is wet
-    const dryGain = gains[0];
-    const wetGain = gains[1];
+    // Gains are created in order: input, dry, wet, output merge, feedback, early reflections
+    const dryGain = gains[1];
+    const wetGain = gains[2];
     expect(dryGain.gain.value).toBeCloseTo(0.7, 5);
     expect(wetGain.gain.value).toBeCloseTo(0.3, 5);
+  });
+
+  it('routes audio through environment input instead of allocating detached nodes', async () => {
+    const ctx = mockContext();
+    const built = mockBuiltGraph(ctx);
+    const env: Environment = {
+      reverb: { type: 'parametric', mix: 0.4 },
+    };
+
+    const input = await applyEnvironment(ctx, env, built);
+    const environmentState = (built as any)._environment;
+
+    expect(environmentState).toBeDefined();
+    expect(environmentState.input).toBe(input);
+    expect(environmentState.input.connect).toHaveBeenCalled();
+    expect(environmentState.outputMerge.connect).toHaveBeenCalledWith(ctx.destination);
   });
 
   it('no-op when no reverb configured', async () => {
@@ -121,9 +139,10 @@ describe('applyEnvironment', () => {
     const env: Environment = {};
     const trace = { log: vi.fn(), getLines: () => [] };
 
-    await applyEnvironment(ctx, env, built, undefined, undefined, trace);
+    const input = await applyEnvironment(ctx, env, built, undefined, undefined, trace);
 
     expect(ctx.createGain).not.toHaveBeenCalled();
     expect(trace.log).toHaveBeenCalledWith('applyEnvironment: no reverb configured');
+    expect(input).toBe(ctx.destination);
   });
 });

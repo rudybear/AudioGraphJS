@@ -1,0 +1,18 @@
+createOscillator id=g0__oscA
+Oscillator[g0__oscA].type=sine
+Oscillator[g0__oscA].frequency.setValueAtTime(440, 0)
+Oscillator[g0__oscA].start(0)
+createGain id=g0__gainA
+Gain[g0__gainA].gain.setValueAtTime(0.300, 0)
+createEmitterBus id=emitter_0
+createOscillator id=g1__oscB
+Oscillator[g1__oscB].type=sine
+Oscillator[g1__oscB].frequency.setValueAtTime(440, 0)
+Oscillator[g1__oscB].start(0)
+createGain id=g1__gainB
+Gain[g1__gainB].gain.setValueAtTime(0.300, 0)
+connect g0__oscA -> g0__gainA
+connect g0__gainA -> emitter_0[in 0]
+connect g1__oscB -> g1__gainB
+connect g1__gainB -> emitter_0[in 0]
+createEmitterInstanceExt id=emitter_0 -> gain -> destination

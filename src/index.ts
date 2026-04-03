@@ -7,6 +7,7 @@ export { createMemoryTrace } from './runtime/trace.js';
 export { setBypass } from './runtime/bypassControl.js';
 export { extractEmitterBindings } from './serialization/gltf-emitters.js';
 export { applyEmitterInstances, applyEmitterInstancesFromExtension } from './runtime/emitters.js';
-export { parseLayeredExtensions } from './serialization/parse-layered.js';
+export { parseLayeredExtensions, mergeGraphSpecs } from './serialization/parse-layered.js';
 export { applyEnvironment } from './runtime/environment.js';
 export { applyListener } from './runtime/listener.js';
+export { loadAudioBuffer } from './assets/loadAudioBuffer.js';

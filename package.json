@@ -44,7 +44,8 @@
     "examples": "npm-run-all -s build example:osc example:osc-pwm example:gain example:biquad example:delay example:buffer example:convolver example:convolver-mix example:stereo example:panner example:splitter example:merger example:channel-mixer example:audio-mixer example:splitter-merger-mixer example:emitter example:complex",
     "dev": "npm run build && vite",
     "spec:validate": "node tools/spec-validate/validate.mjs",
-    "spec:validate:gltf": "node tools/spec-validate/validate-gltf.mjs"
+    "spec:validate:gltf": "node tools/spec-validate/validate-gltf.mjs",
+    "spec:validate:layered": "node tools/spec-validate/validate-layered.mjs examples/graphs-layered/*.json"
   },
   "engines": {
     "node": ">=18"

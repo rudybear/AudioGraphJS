@@ -12,4 +12,7 @@ createEmitterBus id=emitter_0
 connect src_0_g0[out 0] -> vol[in 0]
 connect vol -> lpf
 connect lpf -> emitter_0[in 0]
+applyListener spatializationModel=HRTF
+applyEnvironment type=parametric mix=0.300
+environment: parametric reverb decayTime=1.500 reflectionDelay=0.020
 createEmitterInstanceExt id=emitter_0 -> panner+gain -> destination

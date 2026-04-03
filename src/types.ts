@@ -49,6 +49,13 @@ export interface BuiltGraph {
   _inputs?: Map<NodeId, AudioNode>;
   _outputs?: Map<NodeId, AudioNode>;
   _bypass?: Map<NodeId, { dry: GainNode; wet: GainNode }>;
+  _environment?: {
+    input: AudioNode;
+    dryGain: GainNode;
+    wetGain: GainNode;
+    reverbNode: AudioNode;
+    outputMerge: AudioNode;
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -271,7 +278,8 @@ export interface LayeredParseResult {
   graphs: GraphSpec[];
   /** Emitter binding info extracted from glTF nodes */
   emitterBindings: {
-    nodeIndex: number;
+    nodeIndex?: number;
+    sceneIndex?: number;
     emitterId: number;
     translation?: [number, number, number];
     rotation?: [number, number, number, number];

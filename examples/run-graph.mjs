@@ -5,7 +5,19 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import crypto from 'node:crypto';
 import wae from 'web-audio-engine';
-import { buildGraphAsync, createMemoryTrace, lintGraph, extractEmitterBindings, applyEmitterInstances, parseLayeredExtensions, applyEmitterInstancesFromExtension } from '../dist/index.js';
+import {
+  buildGraphAsync,
+  createMemoryTrace,
+  lintGraph,
+  extractEmitterBindings,
+  applyEmitterInstances,
+  parseLayeredExtensions,
+  applyEmitterInstancesFromExtension,
+  applyEnvironment,
+  applyListener,
+  mergeGraphSpecs,
+  loadAudioBuffer,
+} from '../dist/index.js';
 
 const { OfflineAudioContext } = wae;
 const __filename = fileURLToPath(import.meta.url);
@@ -196,7 +208,7 @@ async function main() {
     } else if (json?.extensions?.KHR_audio_emitter) {
       // 2. Layered format (has extensions.KHR_audio_emitter)
       layeredResult = parseLayeredExtensions(json);
-      spec = layeredResult.graphs[0];
+      spec = mergeGraphSpecs(layeredResult.graphs);
       // Resolve GENERATE_NOISE URIs for audio-buffer-source nodes
       for (const n of spec.nodes) {
         if (n.kind === 'audio-buffer-source' && n.params?.uri && typeof n.params.uri === 'string' && n.params.uri.startsWith('GENERATE_NOISE')) {
@@ -241,6 +253,20 @@ async function main() {
     const ctx = new OfflineAudioContext(2, sr * 2, sr);
     const trace = createMemoryTrace();
     const built = await buildGraphAsync(ctx, spec, trace);
+    let layeredDestination = ctx.destination;
+    if (layeredResult?.listener) {
+      applyListener(ctx, layeredResult.listener.listener, layeredResult.listener.transform, trace);
+    }
+    if (layeredResult?.environment) {
+      layeredDestination = await applyEnvironment(
+        ctx,
+        layeredResult.environment.environment,
+        built,
+        layeredResult.audioEmitter,
+        async (uri, audioContext) => loadAudioBuffer(audioContext, uri),
+        trace,
+      );
+    }
     // If input was a layered format, expand emitter instances from parsed result
     if (layeredResult && layeredResult.emitterBindings.length > 0) {
       const audioEmitter = layeredResult.audioEmitter;
@@ -252,7 +278,7 @@ async function main() {
         scale: b.scale,
       })).filter(b => !!b.emitter);
       const spatModel = layeredResult.listener?.listener?.spatializationModel;
-      applyEmitterInstancesFromExtension(built, resolved, spatModel, trace);
+      applyEmitterInstancesFromExtension(built, resolved, spatModel, trace, layeredDestination);
     }
     // If input was a legacy glTF with node-level emitter bindings, expand instances now
     if (json?.nodes && json?.extensions?.KHR_audio_graph && !json?.extensions?.KHR_audio_emitter) {

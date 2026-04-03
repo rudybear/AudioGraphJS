@@ -32,7 +32,7 @@ export function lintGraph(spec: GraphSpec): LintResult {
   // Emitter degree
   for (const n of spec.nodes) {
     if (n.kind === 'emitter') {
-      if ((indeg.get(n.id) || 0) !== 1) errors.push(`Emitter ${n.id} must have exactly one input`);
+      if ((indeg.get(n.id) || 0) < 1) errors.push(`Emitter ${n.id} must have at least one input`);
       if ((outdeg.get(n.id) || 0) !== 0) errors.push(`Emitter ${n.id} must have zero outputs`);
     }
   }
