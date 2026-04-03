@@ -3,3 +3,4 @@ createBufferSource id=src_0_e0 (uri)
 AudioBufferSource[src_0_e0].start(0)
 AudioBufferSource[src_0_e0].buffer <- uri(data:audio/wav;base64,UklGRiR3AQBXQVZFZm10IBAAAAABAAEAgLsAAAB3AQ…)
 connect src_0_e0 -> emitter_0
+createEmitterInstanceExt id=emitter_0 -> gain -> destination

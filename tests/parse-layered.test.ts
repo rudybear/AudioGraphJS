@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseLayeredExtensions } from '../src/serialization/parse-layered';
+import { parseLayeredExtensions, mergeGraphSpecs } from '../src/serialization/parse-layered';
 import type { GltfDocument } from '../src/types';
 
 describe('parseLayeredExtensions', () => {
@@ -135,6 +135,30 @@ describe('parseLayeredExtensions', () => {
 
     const result = parseLayeredExtensions(gltf);
     expect(result.graphs).toHaveLength(2);
+  });
+
+  it('mergeGraphSpecs preserves shared emitter buses for additive mixing', () => {
+    const merged = mergeGraphSpecs([
+      {
+        nodes: [
+          { id: 'gainA', kind: 'gain', params: { gain: 1.0 } },
+          { id: 'emitter_0', kind: 'emitter', params: { emitterType: 'global', gain: 1.0 } },
+        ],
+        connections: [{ from: { node: 'gainA' }, to: { node: 'emitter_0' } }],
+      },
+      {
+        nodes: [
+          { id: 'gainB', kind: 'gain', params: { gain: 0.5 } },
+          { id: 'emitter_0', kind: 'emitter', params: { emitterType: 'global', gain: 1.0 } },
+        ],
+        connections: [{ from: { node: 'gainB' }, to: { node: 'emitter_0' } }],
+      },
+    ]);
+
+    expect(merged.nodes.filter(n => n.id === 'emitter_0')).toHaveLength(1);
+    expect(merged.connections.filter(c => c.to.node === 'emitter_0')).toHaveLength(2);
+    expect(merged.nodes.some(n => n.id === 'g0__gainA')).toBe(true);
+    expect(merged.nodes.some(n => n.id === 'g1__gainB')).toBe(true);
   });
 
   it('handles multiple inputs/outputs per graph', () => {
@@ -279,6 +303,25 @@ describe('parseLayeredExtensions', () => {
     expect(result.environment!.environment.reverb?.type).toBe('parametric');
     expect(result.environment!.environment.reverb?.decayTime).toBe(2.0);
     expect(result.environment!.sceneIndex).toBe(0);
+  });
+
+  it('extracts scene-level emitter bindings from KHR_audio_emitter on scenes', () => {
+    const gltf: GltfDocument = {
+      extensionsUsed: ['KHR_audio_emitter'],
+      extensions: {
+        KHR_audio_emitter: {
+          audio: [{ uri: 'test.wav' }],
+          sources: [{ audio: 0, gain: 0.5, autoplay: true }],
+          emitters: [{ type: 'global', gain: 1.0, sources: [0] }],
+        },
+      },
+      scenes: [{ extensions: { KHR_audio_emitter: { emitters: [0] } } }],
+    };
+
+    const result = parseLayeredExtensions(gltf);
+    expect(result.emitterBindings).toHaveLength(1);
+    expect(result.emitterBindings[0].sceneIndex).toBe(0);
+    expect(result.emitterBindings[0].emitterId).toBe(0);
   });
 
   it('throws when KHR_audio_emitter is missing', () => {

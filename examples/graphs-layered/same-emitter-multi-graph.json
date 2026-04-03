@@ -1,0 +1,50 @@
+{
+  "asset": { "version": "2.0" },
+  "extensionsUsed": ["KHR_audio_emitter", "KHR_audio_graph"],
+  "extensions": {
+    "KHR_audio_emitter": {
+      "audio": [],
+      "sources": [],
+      "emitters": [
+        { "type": "global", "gain": 1.0, "sources": [] }
+      ]
+    },
+    "KHR_audio_graph": {
+      "graphs": [
+        {
+          "name": "voice-a",
+          "nodes": [
+            { "kind": "oscillator", "params": { "type": "sine", "frequency": 440 }, "label": "oscA" },
+            { "kind": "gain", "params": { "gain": 0.3 }, "label": "gainA" }
+          ],
+          "connections": [
+            { "from": { "node": 0 }, "to": { "node": 1 } }
+          ],
+          "outputs": [
+            { "node": 1, "emitter": 0 }
+          ]
+        },
+        {
+          "name": "voice-b",
+          "nodes": [
+            { "kind": "oscillator", "params": { "type": "sine", "frequency": 440 }, "label": "oscB" },
+            { "kind": "gain", "params": { "gain": 0.3 }, "label": "gainB" }
+          ],
+          "connections": [
+            { "from": { "node": 0 }, "to": { "node": 1 } }
+          ],
+          "outputs": [
+            { "node": 1, "emitter": 0 }
+          ]
+        }
+      ]
+    }
+  },
+  "scenes": [
+    {
+      "extensions": {
+        "KHR_audio_emitter": { "emitters": [0] }
+      }
+    }
+  ]
+}

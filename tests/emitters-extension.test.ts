@@ -117,8 +117,8 @@ describe('applyEmitterInstancesFromExtension', () => {
     ]);
 
     const panner = ctx.createPanner.mock.results[0].value;
-    expect(panner.coneInnerAngle).toBe(1.57);
-    expect(panner.coneOuterAngle).toBe(3.14);
+    expect(panner.coneInnerAngle).toBeCloseTo(89.954, 2);
+    expect(panner.coneOuterAngle).toBeCloseTo(179.909, 2);
     expect(panner.coneOuterGain).toBe(0.2);
   });
 
@@ -170,5 +170,23 @@ describe('applyEmitterInstancesFromExtension', () => {
 
     expect(trace.log).toHaveBeenCalledWith('warn: emitter bus not found for nonexistent');
     expect(ctx.createGain).not.toHaveBeenCalled();
+  });
+
+  it('uses provided destination node instead of context destination', () => {
+    const ctx = mockContext();
+    const built = mockBuiltGraph(ctx, 'emitter_0');
+    const emitter: AudioEmitter = { type: 'global', gain: 0.7, sources: [] };
+    const customDestination = { connect: vi.fn() } as any;
+
+    applyEmitterInstancesFromExtension(
+      built,
+      [{ emitterNodeId: 'emitter_0', emitter }],
+      undefined,
+      undefined,
+      customDestination,
+    );
+
+    const postGain = ctx.createGain.mock.results[0].value;
+    expect(postGain.connect).toHaveBeenCalledWith(customDestination);
   });
 });
