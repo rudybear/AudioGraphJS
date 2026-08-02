@@ -26,9 +26,60 @@ export interface ApplyEnvironmentOptions {
 }
 
 /**
+ * Synthesize a stereo impulse response from resolved parametric reverb values:
+ * sparse early-reflection taps after reflectionsDelay, then an exponentially
+ * decaying noise tail (RT60 = decayTime) low-passed per decayHFRatio.
+ */
+export function generateReverbImpulse(
+  context: BaseAudioContext,
+  params: {
+    decayTime: number;
+    decayHFRatio: number;
+    reflectionsGain: number;
+    reflectionsDelay: number;
+    reverbGain: number;
+    reverbDelay: number;
+    diffusion: number;
+    density: number;
+  },
+): AudioBuffer {
+  const rate = (context as { sampleRate?: number }).sampleRate ?? 48000;
+  const tailStart = params.reflectionsDelay + params.reverbDelay;
+  const length = Math.max(Math.floor(rate * 0.05), Math.floor(rate * (tailStart + params.decayTime)));
+  const buffer: AudioBuffer = (context as any).createBuffer(2, length, rate);
+  const decayRate = 6.908 / Math.max(params.decayTime, 0.05); // -60 dB over decayTime
+  const cutoff = Math.min(Math.max(20000 * params.decayHFRatio, 200), rate * 0.45);
+  const alpha = 1 - Math.exp((-2 * Math.PI * cutoff) / rate);
+  const occupancy = 0.3 + 0.7 * params.density;
+
+  for (let channel = 0; channel < 2; channel += 1) {
+    const data = buffer.getChannelData(channel);
+    const tapCount = 6;
+    for (let k = 0; k < tapCount; k += 1) {
+      const at = Math.floor(rate * (params.reflectionsDelay + k * 0.0063 * (1 + channel * 0.17)));
+      if (at < length) {
+        const polarity = (k + channel) % 2 === 0 ? 1 : -1;
+        data[at] += polarity * params.reflectionsGain * 0.7 * (1 - k / tapCount);
+      }
+    }
+    let lowpassState = 0;
+    const start = Math.floor(rate * tailStart);
+    for (let i = start; i < length; i += 1) {
+      const t = (i - start) / rate;
+      if (Math.random() > occupancy) continue;
+      const white = Math.random() * 2 - 1;
+      lowpassState += alpha * (white - lowpassState);
+      data[i] += lowpassState * Math.exp(-t * decayRate) * params.reverbGain;
+    }
+  }
+  return buffer;
+}
+
+/**
  * Build one shared reverb bus for an environment (spec 2.4).
- * Parametric mode approximates I3DL2-style parameters with a pre-delayed
- * feedback loop whose in-loop low-pass models decayHFRatio.
+ * Parametric mode synthesizes an impulse response from the I3DL2-aligned
+ * parameters and renders it through a ConvolverNode — the spec's sanctioned
+ * realization, unconditionally stable (no feedback topology).
  */
 export async function createReverbBus(
   context: BaseAudioContext,
@@ -57,48 +108,15 @@ export async function createReverbBus(
     return { input, output };
   }
 
-  // Parametric approximation.
-  const { decayTime, decayHFRatio, reflectionsGain, reflectionsDelay, reverbGain, reverbDelay, diffusion } = params;
-
-  // Early reflections: pre-delay + gain.
-  const earlyDelay: DelayNode = ctx.createDelay(Math.max(reflectionsDelay, 1.0));
-  earlyDelay.delayTime.value = reflectionsDelay;
-  const earlyGain: GainNode = ctx.createGain();
-  earlyGain.gain.value = reflectionsGain;
-
-  // Late tail: additional onset delay + feedback loop with in-loop low-pass.
-  const lateDelay: DelayNode = ctx.createDelay(Math.max(reverbDelay + 0.1, 1.0));
-  const loopTime = Math.max(reverbDelay, 0.01);
-  lateDelay.delayTime.value = loopTime;
-  const feedbackGain: GainNode = ctx.createGain();
-  feedbackGain.gain.value = Math.min(Math.pow(0.001, loopTime / Math.max(decayTime, 0.01)), 0.98);
-  const lateGain: GainNode = ctx.createGain();
-  lateGain.gain.value = reverbGain;
-
-  // decayHFRatio < 1 → highs decay faster → darker loop filter.
-  let loopEnd: AudioNode = feedbackGain;
-  if (typeof ctx.createBiquadFilter === 'function') {
-    const loopFilter: BiquadFilterNode = ctx.createBiquadFilter();
-    loopFilter.type = 'lowpass';
-    loopFilter.frequency.value = Math.min(Math.max(20000 * decayHFRatio, 200), 20000);
-    // diffusion < 1 → slightly resonant, sparser-sounding loop.
-    loopFilter.Q.value = 0.5 + 0.5 * (1 - diffusion);
-    feedbackGain.connect(loopFilter);
-    loopEnd = loopFilter;
-  }
-
-  input.connect(earlyDelay);
-  earlyDelay.connect(earlyGain);
-  earlyGain.connect(output);
-  earlyDelay.connect(lateDelay);
-  lateDelay.connect(feedbackGain);
-  loopEnd.connect(lateDelay);
-  lateDelay.connect(lateGain);
-  lateGain.connect(output);
+  // Parametric: generated IR + convolution.
+  const convolver: ConvolverNode = ctx.createConvolver();
+  convolver.buffer = generateReverbImpulse(context, params);
+  input.connect(convolver);
+  convolver.connect(output);
 
   trace?.log?.(
-    `reverbBus: parametric preset=${reverb?.preset ?? 'none'} decayTime=${decayTime} ` +
-    `decayHFRatio=${decayHFRatio} reflectionsDelay=${reflectionsDelay} reverbDelay=${reverbDelay}`,
+    `reverbBus: parametric preset=${reverb?.preset ?? 'none'} decayTime=${params.decayTime} ` +
+    `decayHFRatio=${params.decayHFRatio} reflectionsDelay=${params.reflectionsDelay} reverbDelay=${params.reverbDelay} (generated IR)`,
   );
   return { input, output };
 }
