@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { applyListener } from '../src/runtime/listener';
+import { applyListener, createListenerBus } from '../src/runtime/listener';
 import type { Listener } from '../src/types';
 
 function mockContext() {
@@ -71,6 +71,33 @@ describe('applyListener', () => {
     const listener: Listener = { spatializationModel: 'HRTF' };
     const trace = { log: vi.fn(), getLines: () => [] };
     applyListener(ctx, listener, undefined, trace);
-    expect(trace.log).toHaveBeenCalledWith('applyListener spatializationModel=HRTF');
+    expect(trace.log).toHaveBeenCalledWith('applyListener spatializationModel=HRTF gain=1');
+  });
+});
+
+describe('createListenerBus', () => {
+  function mockBusContext() {
+    const gain = { gain: { value: 1 }, connect: vi.fn(), disconnect: vi.fn() };
+    return {
+      ctx: {
+        destination: {},
+        createGain: vi.fn(() => gain),
+      } as any,
+      gain,
+    };
+  }
+
+  it('carries listener.gain and connects to destination', () => {
+    const { ctx, gain } = mockBusContext();
+    const bus = createListenerBus(ctx, { gain: 0.5 });
+    expect(bus).toBe(gain);
+    expect(gain.gain.value).toBeCloseTo(0.5, 5);
+    expect(gain.connect).toHaveBeenCalledWith(ctx.destination);
+  });
+
+  it('defaults to unity gain without a listener', () => {
+    const { ctx, gain } = mockBusContext();
+    createListenerBus(ctx, undefined);
+    expect(gain.gain.value).toBe(1.0);
   });
 });

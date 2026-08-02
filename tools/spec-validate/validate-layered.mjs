@@ -109,7 +109,13 @@ function validateGraph(g, audioEmitter, graphIdx) {
   return errors;
 }
 
-function validateEnvironment(ext) {
+const REVERB_PRESETS = [
+  'generic', 'smallRoom', 'mediumRoom', 'largeRoom', 'bathroom',
+  'concertHall', 'cathedral', 'cave', 'arena', 'hangar',
+  'corridor', 'forest', 'underwater',
+];
+
+function validateEnvironment(ext, gltf) {
   const errors = [];
   if (ext.listeners && !Array.isArray(ext.listeners)) {
     errors.push('KHR_audio_environment.listeners must be an array');
@@ -117,15 +123,88 @@ function validateEnvironment(ext) {
   if (ext.environments && !Array.isArray(ext.environments)) {
     errors.push('KHR_audio_environment.environments must be an array');
   }
+  for (const [i, l] of (ext.listeners || []).entries()) {
+    if (typeof l.gain === 'number' && l.gain < 0) {
+      errors.push(`listener[${i}].gain must be >= 0`);
+    }
+    if (l.spatializationModel && !['equalpower', 'HRTF', 'custom'].includes(l.spatializationModel)) {
+      errors.push(`listener[${i}].spatializationModel "${l.spatializationModel}" is not a known value`);
+    }
+  }
   for (const [i, env] of (ext.environments || []).entries()) {
     if (env.reverb) {
       const r = env.reverb;
       if (r.type && !['parametric', 'impulseResponse'].includes(r.type)) {
         errors.push(`environment[${i}].reverb.type must be "parametric" or "impulseResponse", got "${r.type}"`);
       }
+      if (r.type === 'impulseResponse' && typeof r.audio !== 'number') {
+        errors.push(`environment[${i}].reverb: type "impulseResponse" requires an audio index`);
+      }
       if (typeof r.mix === 'number' && (r.mix < 0 || r.mix > 1)) {
         errors.push(`environment[${i}].reverb.mix must be in [0, 1]`);
       }
+      if (typeof r.preset === 'string' && !REVERB_PRESETS.includes(r.preset)) {
+        errors.push(`environment[${i}].reverb.preset "${r.preset}" is not a spec preset (allowed as an extension value)`);
+      }
+      if (typeof r.decayTime === 'number' && r.decayTime <= 0) {
+        errors.push(`environment[${i}].reverb.decayTime must be > 0`);
+      }
+      if (typeof r.decayHFRatio === 'number' && (r.decayHFRatio <= 0 || r.decayHFRatio > 2)) {
+        errors.push(`environment[${i}].reverb.decayHFRatio must be in (0, 2]`);
+      }
+    }
+    if (env.doppler) {
+      if (typeof env.doppler.scale === 'number' && env.doppler.scale < 0) {
+        errors.push(`environment[${i}].doppler.scale must be >= 0`);
+      }
+      if (typeof env.doppler.speedOfSound === 'number' && env.doppler.speedOfSound <= 0) {
+        errors.push(`environment[${i}].doppler.speedOfSound must be > 0`);
+      }
+    }
+  }
+  // Node bindings: listener XOR (environment zone with a valid shape)
+  const environments = ext.environments || [];
+  for (const [ni, node] of (gltf?.nodes || []).entries()) {
+    const b = node.extensions?.KHR_audio_environment;
+    if (!b) continue;
+    const hasListener = typeof b.listener === 'number';
+    const hasZone = typeof b.environment === 'number';
+    if (hasListener && hasZone) {
+      errors.push(`node[${ni}]: KHR_audio_environment binding must be a listener or a zone, not both`);
+    }
+    if (hasListener && !(ext.listeners || [])[b.listener]) {
+      errors.push(`node[${ni}].listener index ${b.listener} out of range`);
+    }
+    if (hasZone) {
+      if (!environments[b.environment]) {
+        errors.push(`node[${ni}].environment index ${b.environment} out of range`);
+      }
+      const s = b.shape;
+      if (!s || typeof s.type !== 'string') {
+        errors.push(`node[${ni}]: environment zone requires shape.type`);
+      } else if (s.type === 'box' && !(Array.isArray(s.size) && s.size.length === 3)) {
+        errors.push(`node[${ni}]: box zone requires shape.size [x, y, z]`);
+      } else if (s.type === 'sphere' && !(typeof s.radius === 'number' && s.radius > 0)) {
+        errors.push(`node[${ni}]: sphere zone requires shape.radius > 0`);
+      }
+      if (typeof b.blendDistance === 'number' && b.blendDistance < 0) {
+        errors.push(`node[${ni}].blendDistance must be >= 0`);
+      }
+    }
+  }
+  // Emitter-level sends
+  const emitters = gltf?.extensions?.KHR_audio_emitter?.emitters || [];
+  for (const [ei, em] of emitters.entries()) {
+    const s = em.extensions?.KHR_audio_environment;
+    if (!s) continue;
+    if (typeof s.directLevel === 'number' && s.directLevel < 0) {
+      errors.push(`emitter[${ei}].directLevel must be >= 0`);
+    }
+    if (typeof s.reverbLevel === 'number' && s.reverbLevel < 0) {
+      errors.push(`emitter[${ei}].reverbLevel must be >= 0`);
+    }
+    if (typeof s.environment === 'number' && !environments[s.environment]) {
+      errors.push(`emitter[${ei}].environment index ${s.environment} out of range`);
     }
   }
   return errors;
@@ -163,7 +242,7 @@ function main() {
 
       const audioEnv = gltf.extensions?.KHR_audio_environment;
       if (audioEnv) {
-        allErrors.push(...validateEnvironment(audioEnv));
+        allErrors.push(...validateEnvironment(audioEnv, gltf));
       }
 
       if (allErrors.length) {

@@ -1,0 +1,102 @@
+{
+  "asset": { "version": "2.0" },
+  "extensionsUsed": ["KHR_audio_emitter", "KHR_audio_environment"],
+  "extensions": {
+    "KHR_audio_emitter": {
+      "audio": [{ "uri": "GENERATE_NOISE:1:0.5" }],
+      "sources": [{ "audio": 0, "gain": 1.0, "autoplay": true, "loop": true }],
+      "emitters": [
+        {
+          "name": "engine",
+          "type": "positional",
+          "gain": 0.8,
+          "sources": [0],
+          "positional": {
+            "shapeType": "cone",
+            "coneInnerAngle": 1.0472,
+            "coneOuterAngle": 2.0944,
+            "coneOuterGain": 0.25,
+            "distanceModel": "custom",
+            "refDistance": 1.0,
+            "maxDistance": 50.0,
+            "rolloffFactor": 1.0,
+            "extensions": {
+              "KHR_audio_environment": {
+                "distanceCurve": [1.0, 0.8, 0.5, 0.3, 0.1, 0.0],
+                "airAbsorption": { "enabled": true, "cutoffAtMaxDistance": 4000.0 },
+                "coneOuterCutoff": 3000.0,
+                "dopplerEnabled": true
+              }
+            }
+          },
+          "extensions": {
+            "KHR_audio_environment": {
+              "directLevel": 1.0,
+              "reverbLevel": 0.7
+            }
+          }
+        },
+        {
+          "name": "music",
+          "type": "global",
+          "gain": 0.5,
+          "sources": [0]
+        }
+      ]
+    },
+    "KHR_audio_environment": {
+      "listeners": [
+        {
+          "name": "Player",
+          "gain": 1.0,
+          "spatializationModel": "HRTF",
+          "interauralDistance": 0.17
+        }
+      ],
+      "environments": [
+        {
+          "name": "Courtyard",
+          "reverb": { "preset": "generic", "mix": 0.25 },
+          "doppler": { "enabled": true, "scale": 1.0, "speedOfSound": 343.0 }
+        },
+        {
+          "name": "Tunnel",
+          "reverb": { "preset": "corridor", "mix": 0.6, "decayTime": 2.5 }
+        }
+      ]
+    }
+  },
+  "scenes": [
+    {
+      "name": "Main",
+      "nodes": [0, 1, 2],
+      "extensions": {
+        "KHR_audio_environment": { "environment": 0, "activeListener": 0 }
+      }
+    }
+  ],
+  "nodes": [
+    {
+      "name": "PlayerCamera",
+      "camera": 0,
+      "extensions": { "KHR_audio_environment": { "listener": 0 } }
+    },
+    {
+      "name": "Engine",
+      "translation": [5.0, 0.0, 3.0],
+      "extensions": { "KHR_audio_emitter": { "emitters": [0, 1] } }
+    },
+    {
+      "name": "TunnelZone",
+      "translation": [0.0, 0.0, -20.0],
+      "extensions": {
+        "KHR_audio_environment": {
+          "environment": 1,
+          "shape": { "type": "box", "size": [4.0, 3.0, 30.0] },
+          "blendDistance": 1.0,
+          "priority": 1
+        }
+      }
+    }
+  ]
+}

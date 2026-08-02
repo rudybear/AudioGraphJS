@@ -111,6 +111,9 @@ export interface AudioEmitterPositional {
     KHR_audio_environment?: {
       spatializationModel?: 'equalpower' | 'HRTF' | 'custom';
       distanceCurve?: number[];
+      airAbsorption?: { enabled?: boolean; cutoffAtMaxDistance?: number };
+      coneOuterCutoff?: number;
+      dopplerEnabled?: boolean;
     };
     [key: string]: unknown;
   };
@@ -122,7 +125,14 @@ export interface AudioEmitter {
   sources?: number[];
   positional?: AudioEmitterPositional;
   name?: string;
-  extensions?: Record<string, unknown>;
+  extensions?: {
+    KHR_audio_environment?: {
+      directLevel?: number;
+      reverbLevel?: number;
+      environment?: number;
+    };
+    [key: string]: unknown;
+  };
   extras?: unknown;
 }
 
@@ -183,34 +193,67 @@ export interface HRTFConfig {
 
 export interface Listener {
   name?: string;
+  gain?: number;
   spatializationModel?: 'equalpower' | 'HRTF' | 'custom';
   hrtf?: HRTFConfig;
   interauralDistance?: number;
+  /** Index into KHR_audio_graph.graphs[]: listener-bus processing hook (spec 3.5). */
+  graph?: number;
   extensions?: Record<string, unknown>;
   extras?: unknown;
 }
 
+export type ReverbPresetName =
+  | 'generic' | 'smallRoom' | 'mediumRoom' | 'largeRoom' | 'bathroom'
+  | 'concertHall' | 'cathedral' | 'cave' | 'arena' | 'hangar'
+  | 'corridor' | 'forest' | 'underwater';
+
 export interface ReverbProperties {
   type?: 'parametric' | 'impulseResponse';
+  preset?: ReverbPresetName | string;
   mix?: number;
-  roomSize?: number;
-  reflectivity?: number;
-  reflectivityHigh?: number;
-  reflectivityLow?: number;
-  earlyReflections?: number;
-  earlyReflectionsGain?: number;
-  diffusionGain?: number;
-  reflectionDelay?: number;
-  reverbDelay?: number;
   decayTime?: number;
+  decayHFRatio?: number;
+  reflectionsGain?: number;
+  reflectionsDelay?: number;
+  reverbGain?: number;
+  reverbDelay?: number;
+  diffusion?: number;
+  density?: number;
   audio?: number;
+  normalize?: boolean;
+}
+
+export interface DopplerProperties {
+  enabled?: boolean;
+  scale?: number;
+  speedOfSound?: number;
 }
 
 export interface Environment {
   name?: string;
   reverb?: ReverbProperties;
+  doppler?: DopplerProperties;
   extensions?: Record<string, unknown>;
   extras?: unknown;
+}
+
+export interface ZoneShape {
+  type: 'box' | 'sphere' | string;
+  size?: [number, number, number];
+  radius?: number;
+}
+
+export interface AirAbsorptionProperties {
+  enabled?: boolean;
+  cutoffAtMaxDistance?: number;
+}
+
+/** Per-emitter environment routing (spec 3.1), from emitter.extensions.KHR_audio_environment. */
+export interface EmitterEnvironmentProps {
+  directLevel?: number;
+  reverbLevel?: number;
+  environment?: number;
 }
 
 export interface KHRAudioEnvironmentExtension {
@@ -231,7 +274,13 @@ export interface GltfNode {
   children?: number[];
   extensions?: {
     KHR_audio_emitter?: { emitter?: number; emitters?: number[] };
-    KHR_audio_environment?: { listener?: number; environment?: number };
+    KHR_audio_environment?: {
+      listener?: number;
+      environment?: number;
+      shape?: ZoneShape;
+      blendDistance?: number;
+      priority?: number;
+    };
     [key: string]: unknown;
   };
   [key: string]: unknown;
@@ -242,7 +291,7 @@ export interface GltfScene {
   nodes?: number[];
   extensions?: {
     KHR_audio_emitter?: { emitters?: number[] };
-    KHR_audio_environment?: { environment?: number };
+    KHR_audio_environment?: { environment?: number; activeListener?: number };
     [key: string]: unknown;
   };
   [key: string]: unknown;
@@ -287,11 +336,31 @@ export interface LayeredParseResult {
       scale?: [number, number, number];
     };
   };
-  /** Environment info extracted from KHR_audio_environment on scenes */
+  /** Environment info extracted from KHR_audio_environment on scenes (the default environment) */
   environment?: {
     environment: Environment;
     sceneIndex: number;
   };
+  /** Environment zones extracted from KHR_audio_environment node bindings */
+  zones?: EnvironmentZoneBinding[];
+  /** Per-emitter environment routing (directLevel/reverbLevel/forced environment), keyed by emitter index */
+  emitterEnvironment?: Map<number, EmitterEnvironmentProps>;
   /** The raw audio_emitter extension for reference */
   audioEmitter: KHRAudioEmitterExtension;
+}
+
+export interface NodeTransform {
+  translation?: [number, number, number];
+  rotation?: [number, number, number, number];
+  scale?: [number, number, number];
+}
+
+export interface EnvironmentZoneBinding {
+  nodeIndex: number;
+  environmentIndex: number;
+  environment: Environment;
+  shape: ZoneShape;
+  blendDistance: number;
+  priority: number;
+  transform?: NodeTransform;
 }

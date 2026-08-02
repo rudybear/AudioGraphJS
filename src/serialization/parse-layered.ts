@@ -13,9 +13,12 @@ import type {
   LayeredParseResult,
   Listener,
   Environment,
+  EnvironmentZoneBinding,
+  EmitterEnvironmentProps,
   NodeKind,
   NodeParamMap,
 } from '../types.js';
+import { selectActiveListener } from '../runtime/spatial.js';
 
 // Map KHR_audio_graph node kind → runtime NodeKind
 const FILTER_KINDS = new Set([
@@ -71,7 +74,20 @@ function makeEmitterParams(emitter: AudioEmitter): NodeParamMap {
     if (typeof pos.coneInnerAngle === 'number') attenuation.coneInnerAngle = pos.coneInnerAngle;
     if (typeof pos.coneOuterAngle === 'number') attenuation.coneOuterAngle = pos.coneOuterAngle;
     if (typeof pos.coneOuterGain === 'number') attenuation.coneOuterGain = pos.coneOuterGain;
-    params.spatialProperties = { attenuation };
+    const spatialProperties: Record<string, unknown> = { attenuation };
+
+    // KHR_audio_environment positional extension (spec 3.2)
+    const envExt = pos.extensions?.KHR_audio_environment;
+    if (envExt) {
+      if (envExt.spatializationModel) spatialProperties.spatializationModel = envExt.spatializationModel;
+      const environment: Record<string, unknown> = {};
+      if (Array.isArray(envExt.distanceCurve)) environment.distanceCurve = envExt.distanceCurve;
+      if (envExt.airAbsorption) environment.airAbsorption = envExt.airAbsorption;
+      if (typeof envExt.coneOuterCutoff === 'number') environment.coneOuterCutoff = envExt.coneOuterCutoff;
+      if (typeof envExt.dopplerEnabled === 'boolean') environment.dopplerEnabled = envExt.dopplerEnabled;
+      if (Object.keys(environment).length > 0) spatialProperties.environment = environment;
+    }
+    params.spatialProperties = spatialProperties;
   }
 
   return params as NodeParamMap;
@@ -269,31 +285,21 @@ export function parseLayeredExtensions(gltf: GltfDocument): LayeredParseResult {
     }
   }
 
-  // Extract listener from KHR_audio_environment on nodes
+  // Active listener per the spec 1.3 lifecycle (scene activeListener → camera
+  // binding → first binding; rule 4, the implicit viewer listener, is the caller's default).
   let listenerResult: LayeredParseResult['listener'];
   if (audioEnv?.listeners) {
-    for (let i = 0; i < gltfNodes.length; i++) {
-      const n = gltfNodes[i];
-      const envExt = n.extensions?.KHR_audio_environment;
-      if (envExt && typeof envExt.listener === 'number') {
-        const listener = audioEnv.listeners[envExt.listener];
-        if (listener) {
-          listenerResult = {
-            listener,
-            nodeIndex: i,
-            transform: {
-              translation: n.translation,
-              rotation: n.rotation,
-              scale: n.scale,
-            },
-          };
-          break; // Only one active listener
-        }
-      }
+    const selected = selectActiveListener(gltf);
+    if (selected) {
+      listenerResult = {
+        listener: selected.listener,
+        nodeIndex: selected.nodeIndex,
+        transform: selected.transform,
+      };
     }
   }
 
-  // Extract environment from KHR_audio_environment on scenes
+  // Default environment from KHR_audio_environment on scenes
   let environmentResult: LayeredParseResult['environment'];
   if (audioEnv?.environments) {
     const scenes = gltf.scenes || [];
@@ -310,11 +316,51 @@ export function parseLayeredExtensions(gltf: GltfDocument): LayeredParseResult {
     }
   }
 
+  // Environment zones from KHR_audio_environment node bindings (spec 2.3)
+  const zones: EnvironmentZoneBinding[] = [];
+  if (audioEnv?.environments) {
+    for (let i = 0; i < gltfNodes.length; i++) {
+      const n = gltfNodes[i];
+      const envExt = n.extensions?.KHR_audio_environment;
+      if (!envExt || typeof envExt.environment !== 'number' || !envExt.shape) continue;
+      const environment = audioEnv.environments[envExt.environment];
+      if (!environment) continue;
+      zones.push({
+        nodeIndex: i,
+        environmentIndex: envExt.environment,
+        environment,
+        shape: envExt.shape,
+        blendDistance: envExt.blendDistance ?? 0,
+        priority: envExt.priority ?? 0,
+        transform: {
+          translation: n.translation,
+          rotation: n.rotation,
+          scale: n.scale,
+        },
+      });
+    }
+  }
+
+  // Per-emitter environment routing (spec 3.1)
+  const emitterEnvironment = new Map<number, EmitterEnvironmentProps>();
+  for (let i = 0; i < audioEmitter.emitters.length; i++) {
+    const emitter = audioEmitter.emitters[i];
+    const ext = emitter.extensions?.KHR_audio_environment;
+    const defaults: EmitterEnvironmentProps = {
+      directLevel: 1.0,
+      // Default reverbLevel: 1.0 for positional, 0.0 for global (spec 3.1)
+      reverbLevel: emitter.type === 'positional' ? 1.0 : 0.0,
+    };
+    emitterEnvironment.set(i, { ...defaults, ...ext });
+  }
+
   return {
     graphs,
     emitterBindings,
     listener: listenerResult,
     environment: environmentResult,
+    zones: zones.length > 0 ? zones : undefined,
+    emitterEnvironment,
     audioEmitter,
   };
 }

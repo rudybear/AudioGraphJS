@@ -40,11 +40,9 @@
         "name": "Room",
         "reverb": {
           "type": "parametric",
+          "preset": "mediumRoom",
           "mix": 0.3,
-          "roomSize": 10.0,
-          "reflectivity": 0.5,
-          "decayTime": 1.5,
-          "earlyReflections": 8
+          "decayTime": 1.5
         }
       }]
     }

@@ -21,6 +21,25 @@ function rotateVecByQuat(v: [number, number, number], q: [number, number, number
   ];
 }
 
+/**
+ * Listener bus (spec 1.1 gain + 3.5 hook): a master gain carrying listener.gain,
+ * connected to the destination. Direct paths and environment mix return here
+ * instead of the raw destination, so listener gain and any listener-bus graph
+ * apply to the full final mix.
+ */
+export function createListenerBus(
+  context: BaseAudioContext,
+  listener: Listener | undefined,
+  trace?: TraceLogger,
+): GainNode {
+  const ctx = context as any;
+  const bus: GainNode = ctx.createGain();
+  bus.gain.value = listener?.gain ?? 1.0;
+  bus.connect(ctx.destination);
+  trace?.log?.(`listenerBus gain=${bus.gain.value}${typeof listener?.graph === 'number' ? ` graph=${listener.graph} (hook)` : ''}`);
+  return bus;
+}
+
 export function applyListener(
   context: BaseAudioContext,
   listener: Listener,
@@ -28,7 +47,7 @@ export function applyListener(
   trace?: TraceLogger,
 ): string {
   const model = listener.spatializationModel ?? 'equalpower';
-  trace?.log?.(`applyListener spatializationModel=${model}`);
+  trace?.log?.(`applyListener spatializationModel=${model} gain=${listener.gain ?? 1}`);
 
   const audioListener = context.listener;
   if (transform?.translation) {
