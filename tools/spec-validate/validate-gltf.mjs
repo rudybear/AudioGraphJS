@@ -11,6 +11,15 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const specRoot = path.resolve(__dirname, '../../spec-repo/extensions/2.0/Khronos/KHR_audio_graph/schema');
 
+if (!fs.existsSync(specRoot)) {
+  console.error(
+    `spec-repo schemas not found at ${specRoot}\n` +
+    `Fetch them with:\n` +
+    `  git clone --depth 1 --branch codex/update-khr-audio-graph-only https://github.com/facebook/glTF.git spec-repo`,
+  );
+  process.exit(1);
+}
+
 function loadSchemas(dir) {
   const files = fs.readdirSync(dir).filter(f => f.endsWith('.schema.json'));
   const schemas = {};

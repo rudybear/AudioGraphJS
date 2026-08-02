@@ -12,6 +12,9 @@ jobs:
           node-version: 18
       - run: npm ci || npm i
       - run: npm run build
+      # spec-repo is the glTF spec fork carrying the KHR_audio_graph schemas
+      # (kept out of this repo; validators read schemas from it).
+      - run: git clone --depth 1 --branch codex/update-khr-audio-graph-only https://github.com/facebook/glTF.git spec-repo
       - run: npm run spec:validate
       - run: npm run example:compare-khr
       - run: npm run example:compare-khr:strict

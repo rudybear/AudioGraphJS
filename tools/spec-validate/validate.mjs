@@ -8,6 +8,15 @@ const __dirname = path.dirname(__filename);
 
 const specRoot = path.resolve(__dirname, '../../spec-repo/extensions/2.0/Khronos/KHR_audio_graph/schema');
 
+if (!fs.existsSync(specRoot)) {
+  console.error(
+    `spec-repo schemas not found at ${specRoot}\n` +
+    `Fetch them with:\n` +
+    `  git clone --depth 1 --branch codex/update-khr-audio-graph-only https://github.com/facebook/glTF.git spec-repo`,
+  );
+  process.exit(1);
+}
+
 function loadSchemas(dir) {
   const files = fs.readdirSync(dir).filter(f => f.endsWith('.schema.json'));
   const schemas = {};
@@ -40,14 +49,15 @@ function main() {
     ajv.addSchema({ "$id": "glTFid.schema.json", "type": "integer", "minimum": 0 }, 'glTFid.schema.json');
   }
 
-  // Example instances to validate (node objects only for now)
+  // Example param instances to validate against the per-kind schemas
+  // (current layered model: seconds, string enums, no source/emitter/reverb kinds).
   const examples = [
-    { file: 'gain.example.json', schema: 'KHR_audio_graph.gain.schema.json', data: { id: 1, gain: 0.5 } },
-    { file: 'delay.example.json', schema: 'KHR_audio_graph.delay.schema.json', data: { id: 2, delayTime: 120 } },
-    { file: 'oscillator.example.json', schema: 'KHR_audio_graph.oscillator.schema.json', data: { id: 3, type: 1, frequency: 440, pulseWidth: 0.25 } },
-    { file: 'reverb.example.json', schema: 'KHR_audio_graph.reverb.schema.json', data: { id: 4, impulse: 0, normalize: true } },
-    { file: 'waveshaper.example.json', schema: 'KHR_audio_graph.waveshaper.schema.json', data: { id: 5, amount: 0.7, oversample: '2x' } },
-    { file: 'source.example.json', schema: 'KHR_audio_graph.source.schema.json', data: { data: { audioData: 0 }, when: 0, loop: false } }
+    { file: 'gain.example.json', schema: 'KHR_audio_graph.gain.schema.json', data: { gain: 0.5, interpolation: 'linear', duration: 0.1 } },
+    { file: 'delay.example.json', schema: 'KHR_audio_graph.delay.schema.json', data: { delayTime: 0.12, maxDelayTime: 1.0 } },
+    { file: 'oscillator.example.json', schema: 'KHR_audio_graph.oscillator.schema.json', data: { type: 'square', frequency: 440, pulseWidth: 0.25 } },
+    { file: 'lowpass.example.json', schema: 'KHR_audio_graph.lowpass.schema.json', data: { frequency: 800, qualityFactor: 0.707 } },
+    { file: 'waveshaper.example.json', schema: 'KHR_audio_graph.waveshaper.schema.json', data: { amount: 0.7, oversample: '2x' } },
+    { file: 'splitter.example.json', schema: 'KHR_audio_graph.splitter.schema.json', data: { channelInterpretation: 'discrete' } }
   ];
   let ok = true;
   // Graph-level extension instance + linter
@@ -61,21 +71,16 @@ function main() {
     if (!okGraph) { ok = false; console.error('FAIL graph.example.json -> glTF.KHR_audio_graph.schema.json'); console.error(vGraph.errors); }
     else {
       console.log('OK   graph.example.json -> glTF.KHR_audio_graph.schema.json');
-      // Linter: emitter in-degree=1; no emitter out-degree; must have sink (emitter or outputs); DAG; basic arities
+      // Linter (layered model): sink = outputs[] binding or terminal node
+      // (rule 13: terminals route to the global destination); DAG; basic arities.
       for (const g of graphData.graphs || []) {
         const indeg = new Map(); const outdeg = new Map();
         const kinds = (g.nodes || []).map(n => n.kind);
         for (const [i, _] of (g.nodes || []).entries()) { indeg.set(i, 0); outdeg.set(i, 0); }
         for (const c of g.connections || []) { indeg.set(c.to.node, (indeg.get(c.to.node)||0)+1); outdeg.set(c.from.node, (outdeg.get(c.from.node)||0)+1); }
-        let hasSink = Array.isArray(g.outputs) && g.outputs.length > 0;
-        for (let i=0;i<kinds.length;i++) {
-          if (kinds[i] === 'emitter') {
-            hasSink = true;
-            if (indeg.get(i) !== 1) { ok = false; console.error(`LINT: emitter at index ${i} must have exactly 1 input`); }
-            if ((outdeg.get(i)||0) !== 0) { ok = false; console.error(`LINT: emitter at index ${i} must have 0 outputs`); }
-          }
-        }
-        if (!hasSink) { ok = false; console.error('LINT: graph must have at least one sink (emitter or outputs[])'); }
+        const hasSink = (Array.isArray(g.outputs) && g.outputs.length > 0)
+          || kinds.some((_, i) => (outdeg.get(i) || 0) === 0);
+        if (!hasSink) { ok = false; console.error('LINT: graph must have at least one sink (outputs[] binding or terminal node)'); }
         // DAG check
         const adj = new Map();
         for (let i=0;i<kinds.length;i++) adj.set(i, []);
@@ -83,8 +88,8 @@ function main() {
         const temp = new Set(); const perm = new Set();
         function visit(v){ if (perm.has(v)) return false; if (temp.has(v)) return true; temp.add(v); for(const w of adj.get(v)||[]){ if(visit(w)) return true;} temp.delete(v); perm.add(v); return false; }
         for (let i=0;i<kinds.length;i++) { if (!perm.has(i)) { if (visit(i)) { ok=false; console.error('LINT: graph contains a cycle (must be DAG)'); break; } } }
-        // Basic arity checks
-        const outputsSet = new Set(Array.isArray(g.outputs) ? g.outputs : []);
+        // Basic arity checks (outputs[] entries are {node, output, emitter} objects)
+        const outputsSet = new Set((Array.isArray(g.outputs) ? g.outputs : []).map(o => (typeof o === 'object' ? o.node : o)));
         for (let i=0;i<kinds.length;i++) {
           const inD = indeg.get(i)||0, outD = outdeg.get(i)||0;
           switch (kinds[i]) {

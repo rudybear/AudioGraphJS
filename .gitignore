@@ -6,3 +6,4 @@ coverage/
 *.tmp
 examples/*.wav
 testslog.txt
+spec-repo/
