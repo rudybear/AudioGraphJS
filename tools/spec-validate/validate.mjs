@@ -12,7 +12,7 @@ if (!fs.existsSync(specRoot)) {
   console.error(
     `spec-repo schemas not found at ${specRoot}\n` +
     `Fetch them with:\n` +
-    `  git clone --depth 1 --branch codex/update-khr-audio-graph-only https://github.com/facebook/glTF.git spec-repo`,
+    `  git clone --depth 1 --branch KHR_audio_graph https://github.com/rudybear/glTF.git spec-repo`,
   );
   process.exit(1);
 }
