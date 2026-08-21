@@ -97,3 +97,55 @@ describe('lintLayeredGraph', () => {
     expect(result.errors.some(e => e.includes('invalid node index 10'))).toBe(true);
   });
 });
+
+describe('lintLayeredGraph r2 rules', () => {
+  const makeAudioEmitter = () => ({
+    audio: [{ uri: 'a.mp3' }],
+    sources: [{ audio: 0 }],
+    emitters: [{ type: 'global' as const, sources: [0] }],
+  });
+
+  it('rejects a cycle with no delay node (rule 1)', () => {
+    const graph: KHRGraph = {
+      nodes: [
+        { kind: 'gain', params: {} },
+        { kind: 'gain', params: {} },
+      ],
+      connections: [
+        { from: { node: 0 }, to: { node: 1 } },
+        { from: { node: 1 }, to: { node: 0 } },
+      ],
+      outputs: [{ node: 1, emitter: 0 }],
+    };
+    const result = lintLayeredGraph(graph, makeAudioEmitter());
+    expect(result.errors.some(e => e.includes('no delay node'))).toBe(true);
+  });
+
+  it('permits a delay-stabilized feedback cycle (rule 1)', () => {
+    const graph: KHRGraph = {
+      nodes: [
+        { kind: 'gain', params: {} },
+        { kind: 'delay', params: { delayTime: 0.25 } },
+        { kind: 'gain', params: { gain: 0.4 } },
+      ],
+      connections: [
+        { from: { node: 0 }, to: { node: 1 } },
+        { from: { node: 1 }, to: { node: 2 } },
+        { from: { node: 2 }, to: { node: 1 } },
+      ],
+      outputs: [{ node: 1, emitter: 0 }],
+    };
+    const result = lintLayeredGraph(graph, makeAudioEmitter());
+    expect(result.errors).toEqual([]);
+  });
+
+  it('rejects the oscillator node kind (r2: source data instead)', () => {
+    const graph: KHRGraph = {
+      nodes: [{ kind: 'oscillator', params: { type: 'sine' } }],
+      connections: [],
+      outputs: [{ node: 0, emitter: 0 }],
+    };
+    const result = lintLayeredGraph(graph, makeAudioEmitter());
+    expect(result.errors.some(e => e.includes('not a graph node kind'))).toBe(true);
+  });
+});

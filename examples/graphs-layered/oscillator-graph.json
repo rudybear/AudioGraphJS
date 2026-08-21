@@ -1,21 +1,62 @@
 {
-  "extensionsUsed": ["KHR_audio_emitter", "KHR_audio_graph"],
+  "extensionsUsed": [
+    "KHR_audio_emitter",
+    "KHR_audio_graph"
+  ],
   "extensions": {
     "KHR_audio_emitter": {
       "audio": [],
-      "sources": [],
-      "emitters": [{ "type": "global", "gain": 1.0, "sources": [] }]
+      "sources": [
+        {
+          "name": "synth-tone",
+          "gain": 1.0,
+          "autoplay": true,
+          "extensions": {
+            "KHR_audio_graph": {
+              "oscillator": {
+                "type": "sine",
+                "frequency": 440
+              }
+            }
+          }
+        }
+      ],
+      "emitters": [
+        {
+          "type": "global",
+          "gain": 1.0,
+          "sources": []
+        }
+      ]
     },
     "KHR_audio_graph": {
-      "graphs": [{
-        "name": "synth",
-        "nodes": [
-          { "kind": "oscillator", "params": { "type": "sine", "frequency": 440 }, "label": "osc" },
-          { "kind": "gain", "params": { "gain": 0.3 }, "label": "vol" }
-        ],
-        "connections": [{ "from": { "node": 0 }, "to": { "node": 1 } }],
-        "outputs": [{ "node": 1, "emitter": 0 }]
-      }]
+      "graphs": [
+        {
+          "name": "synth",
+          "nodes": [
+            {
+              "kind": "gain",
+              "params": {
+                "gain": 0.3
+              },
+              "label": "vol"
+            }
+          ],
+          "connections": [],
+          "inputs": [
+            {
+              "source": 0,
+              "node": 0
+            }
+          ],
+          "outputs": [
+            {
+              "node": 0,
+              "emitter": 0
+            }
+          ]
+        }
+      ]
     }
   }
 }

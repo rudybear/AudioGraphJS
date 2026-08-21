@@ -76,14 +76,24 @@ export interface AudioEmitterAudioData {
   extras?: unknown;
 }
 
+export interface OscillatorSourceData {
+  type?: 'sine' | 'square' | 'triangle' | 'sawtooth' | 'custom' | string;
+  frequency?: number;
+  detune?: number;
+  pulseWidth?: number;
+  periodicWave?: { real: number[]; imag: number[] };
+}
+
 export interface AudioEmitterSource {
-  audio: number;
+  /** Absent for oscillator sources (r2): waveform supplied via extensions.KHR_audio_graph.oscillator. */
+  audio?: number;
   gain?: number;
   autoplay?: boolean;
   loop?: boolean;
   playbackRate?: number;
   extensions?: {
     KHR_audio_graph?: {
+      oscillator?: OscillatorSourceData;
       loopStart?: number;
       loopEnd?: number;
       offset?: number;

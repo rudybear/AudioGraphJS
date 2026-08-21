@@ -331,3 +331,77 @@ describe('parseLayeredExtensions', () => {
     expect(p.spatialProperties.attenuation.coneOuterGain).toBe(0.3);
   });
 });
+
+describe('parseLayeredExtensions r2', () => {
+  it('oscillator source data becomes a runtime oscillator node with scheduling', () => {
+    const gltf: GltfDocument = {
+      extensions: {
+        KHR_audio_emitter: {
+          audio: [],
+          sources: [{
+            gain: 0.5,
+            extensions: {
+              KHR_audio_graph: {
+                oscillator: { type: 'sine', frequency: 220, detune: 5 },
+                when: 0.1,
+                duration: 0.4,
+              },
+            },
+          }],
+          emitters: [{ type: 'global', gain: 1.0, sources: [] }],
+        },
+        KHR_audio_graph: {
+          graphs: [{
+            name: 'synth',
+            nodes: [{ kind: 'gain', params: { gain: 0.3 } }],
+            connections: [],
+            inputs: [{ source: 0, node: 0 }],
+            outputs: [{ node: 0, emitter: 0 }],
+          }],
+        },
+      },
+    };
+    const result = parseLayeredExtensions(gltf);
+    const osc = result.graphs[0].nodes.find(n => n.kind === 'oscillator');
+    expect(osc).toBeDefined();
+    expect(osc!.params!.frequency).toBe(220);
+    expect(osc!.params!.detune).toBe(5);
+    expect(osc!.params!.startTime).toBeCloseTo(0.1, 6);
+    expect(osc!.params!.stopTime).toBeCloseTo(0.5, 6);
+    expect(osc!.params!.gain).toBe(0.5);
+  });
+
+  it('derives splitter/merger port counts from connections (rules 9/10)', () => {
+    const gltf: GltfDocument = {
+      extensions: {
+        KHR_audio_emitter: {
+          audio: [{ uri: 'a.mp3' }],
+          sources: [{ audio: 0 }],
+          emitters: [{ type: 'global', gain: 1.0, sources: [] }],
+        },
+        KHR_audio_graph: {
+          graphs: [{
+            name: 'channels',
+            nodes: [
+              { kind: 'splitter', params: {} },
+              { kind: 'gain', params: {} },
+              { kind: 'channelmerger', params: {} },
+            ],
+            connections: [
+              { from: { node: 0, output: 0 }, to: { node: 2, input: 0 } },
+              { from: { node: 0, output: 3 }, to: { node: 1 } },
+              { from: { node: 1 }, to: { node: 2, input: 5 } },
+            ],
+            inputs: [{ source: 0, node: 0 }],
+            outputs: [{ node: 2, emitter: 0 }],
+          }],
+        },
+      },
+    };
+    const result = parseLayeredExtensions(gltf);
+    const splitter = result.graphs[0].nodes.find(n => n.kind === 'channel-splitter');
+    const merger = result.graphs[0].nodes.find(n => n.kind === 'channel-merger');
+    expect(splitter!.params!.numberOfOutputs).toBe(4); // max output port 3 + 1
+    expect(merger!.params!.numberOfInputs).toBe(6); // max input port 5 + 1
+  });
+});

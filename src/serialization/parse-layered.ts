@@ -35,7 +35,9 @@ function mapKind(khrKind: string): NodeKind {
     case 'channelmerger': return 'channel-merger';
     case 'channelmixer': return 'channel-mixer';
     case 'audiomixer': return 'audio-mixer';
-    case 'oscillator': return 'oscillator';
+    case 'oscillator':
+      console.warn('KHR_audio_graph: "oscillator" is not a graph node kind (r2); declare it as source data via source.extensions.KHR_audio_graph.oscillator');
+      return 'oscillator';
     case 'emitter': return 'emitter';
     default: return khrKind as NodeKind;
   }
@@ -93,12 +95,33 @@ function makeEmitterParams(emitter: AudioEmitter): NodeParamMap {
   return params as NodeParamMap;
 }
 
-function makeSourceParams(
+function makeSourceNode(
   source: AudioEmitterSource,
   audioData: AudioEmitterAudioData[],
-): NodeParamMap {
+): { kind: NodeKind; params: NodeParamMap } {
   const params: Record<string, any> = {};
-  const ad = audioData[source.audio];
+  const ext = source.extensions?.KHR_audio_graph;
+
+  // Oscillator source (r2): a source with no `audio` whose waveform is
+  // supplied by the KHR_audio_graph extension. Uniform playback control:
+  // when/duration schedule it exactly like a clip source; loop/offset/
+  // playbackRate are ignored per spec.
+  if (ext?.oscillator && typeof source.audio !== 'number') {
+    const osc = ext.oscillator;
+    if (osc.type) params.type = osc.type;
+    if (typeof osc.frequency === 'number') params.frequency = osc.frequency;
+    if (typeof osc.detune === 'number') params.detune = osc.detune;
+    if (typeof osc.pulseWidth === 'number') params.pulseWidth = osc.pulseWidth;
+    if (osc.periodicWave) params.periodicWave = osc.periodicWave;
+    if (typeof source.gain === 'number') params.gain = source.gain;
+    if (typeof ext.when === 'number') params.startTime = ext.when;
+    if (typeof ext.when === 'number' && typeof ext.duration === 'number') {
+      params.stopTime = ext.when + ext.duration;
+    }
+    return { kind: 'oscillator', params: params as NodeParamMap };
+  }
+
+  const ad = typeof source.audio === 'number' ? audioData[source.audio] : undefined;
   if (ad?.uri) params.uri = ad.uri;
   if (typeof source.gain === 'number') params.gain = source.gain;
   if (typeof source.playbackRate === 'number') params.playbackRate = source.playbackRate;
@@ -106,7 +129,6 @@ function makeSourceParams(
   if (typeof source.autoplay === 'boolean') params.autoplay = source.autoplay;
 
   // Extended source properties from KHR_audio_graph extension on source
-  const ext = source.extensions?.KHR_audio_graph;
   if (ext) {
     if (typeof ext.loopStart === 'number') params.loopStart = ext.loopStart;
     if (typeof ext.loopEnd === 'number') params.loopEnd = ext.loopEnd;
@@ -115,7 +137,7 @@ function makeSourceParams(
     if (typeof ext.duration === 'number') params.duration = ext.duration;
   }
 
-  return params as NodeParamMap;
+  return { kind: 'audio-buffer-source', params: params as NodeParamMap };
 }
 
 function parseGraph(
@@ -152,8 +174,8 @@ function parseGraph(
       if (!source) continue;
       const srcId = `src_${inp.source}_g${graphIndex}`;
       if (!sourceNodeIds.has(srcId)) {
-        const params = makeSourceParams(source, audioEmitter.audio);
-        nodes.push({ id: srcId, kind: 'audio-buffer-source', params });
+        const sourceNode = makeSourceNode(source, audioEmitter.audio);
+        nodes.push({ id: srcId, kind: sourceNode.kind, params: sourceNode.params });
         sourceNodeIds.set(srcId, srcId);
       }
       // Connection from source to target node
@@ -181,6 +203,28 @@ function parseGraph(
       from: { node: idByIndex[c.from.node], output: c.from.output },
       to: { node: idByIndex[c.to.node], input: c.to.input },
     });
+  }
+
+  // Rules 9/10 (r2): splitter output count / merger input count derive from the
+  // highest port index referenced in connections[] (and inputs[]), plus one.
+  for (let i = 0; i < graph.nodes.length; i++) {
+    const kind = graph.nodes[i].kind;
+    if (kind !== 'splitter' && kind !== 'channelmerger') continue;
+    let maxPort = 0;
+    for (const c of graph.connections) {
+      if (kind === 'splitter' && c.from.node === i) maxPort = Math.max(maxPort, c.from.output ?? 0);
+      if (kind === 'channelmerger' && c.to.node === i) maxPort = Math.max(maxPort, c.to.input ?? 0);
+    }
+    if (kind === 'channelmerger') {
+      for (const inp of graph.inputs ?? []) {
+        if (inp.node === i) maxPort = Math.max(maxPort, inp.input ?? 0);
+      }
+    }
+    const runtimeNode = nodes.find((n) => n.id === idByIndex[i]);
+    if (runtimeNode) {
+      const key = kind === 'splitter' ? 'numberOfOutputs' : 'numberOfInputs';
+      (runtimeNode.params as Record<string, unknown>)[key] = maxPort + 1;
+    }
   }
 
   // Create emitter nodes for graph outputs
@@ -233,8 +277,8 @@ function parseEmitterOnly(audioEmitter: KHRAudioEmitterExtension): GraphSpec {
       const source = audioEmitter.sources[srcIdx];
       if (!source) continue;
       const srcId = `src_${srcIdx}_e${eIdx}`;
-      const params = makeSourceParams(source, audioEmitter.audio);
-      nodes.push({ id: srcId, kind: 'audio-buffer-source', params });
+      const sourceNode = makeSourceNode(source, audioEmitter.audio);
+      nodes.push({ id: srcId, kind: sourceNode.kind, params: sourceNode.params });
       connections.push({
         from: { node: srcId },
         to: { node: emitterId },

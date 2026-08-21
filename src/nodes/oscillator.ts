@@ -7,6 +7,7 @@ export interface OscillatorParams {
   pulseWidth?: number; // for 'square' only, static [0..1]
   startTime?: number; // seconds
   stopTime?: number; // seconds (absolute on context time)
+  periodicWave?: { real: number[]; imag: number[] }; // custom waveform (r2 source data)
 }
 
 export function createOscillator(
@@ -20,6 +21,20 @@ export function createOscillator(
   if (p.type) { node.type = p.type as OscillatorType; trace?.log?.(`Oscillator[${spec.id}].type=${p.type}`); }
   if (typeof p.frequency === 'number') { node.frequency.setValueAtTime(p.frequency, context.currentTime); trace?.log?.(`Oscillator[${spec.id}].frequency.setValueAtTime(${p.frequency}, ${context.currentTime})`); }
   if (typeof p.detune === 'number') { node.detune.setValueAtTime(p.detune, context.currentTime); trace?.log?.(`Oscillator[${spec.id}].detune.setValueAtTime(${p.detune}, ${context.currentTime})`); }
+
+  // Custom waveform (type: 'custom') via Fourier coefficients
+  if (p.periodicWave && Array.isArray(p.periodicWave.real) && Array.isArray(p.periodicWave.imag)) {
+    try {
+      const wave = context.createPeriodicWave(
+        new Float32Array(p.periodicWave.real),
+        new Float32Array(p.periodicWave.imag),
+      );
+      node.setPeriodicWave(wave);
+      trace?.log?.(`Oscillator[${spec.id}].setPeriodicWave(custom, ${p.periodicWave.real.length} coefficients)`);
+    } catch (_) {
+      // ignore if backend doesn't support PeriodicWave
+    }
+  }
 
   // Static PWM for square using PeriodicWave
   if (p.type === 'square' && typeof p.pulseWidth === 'number') {

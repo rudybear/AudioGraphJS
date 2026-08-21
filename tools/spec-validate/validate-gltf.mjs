@@ -65,7 +65,20 @@ function lintGraph(g) {
   for (const c of g.connections || []) (adj.get(c.from.node)||[]).push(c.to.node);
   const temp = new Set(); const perm = new Set();
   function visit(v){ if (perm.has(v)) return false; if (temp.has(v)) return true; temp.add(v); for (const w of adj.get(v)||[]) { if (visit(w)) return true; } temp.delete(v); perm.add(v); return false; }
-  for (let i=0;i<kinds.length;i++) { if (!perm.has(i) && visit(i)) { errors.push('graph contains a cycle (must be DAG)'); break; } }
+  // Rule 1 (r2): only delay-free cycles are invalid.
+  const cycleWith = (excludeDelay) => {
+    const adj2 = new Map();
+    for (let i=0;i<kinds.length;i++) adj2.set(i, []);
+    for (const c of g.connections || []) {
+      if (excludeDelay && (kinds[c.from.node] === 'delay' || kinds[c.to.node] === 'delay')) continue;
+      (adj2.get(c.from.node) || []).push(c.to.node);
+    }
+    const tmp = new Set(), done = new Set();
+    const go = (v) => { if (done.has(v)) return false; if (tmp.has(v)) return true; tmp.add(v); for (const w of adj2.get(v)||[]) { if (go(w)) return true; } tmp.delete(v); done.add(v); return false; };
+    for (let i=0;i<kinds.length;i++) { if (!done.has(i) && go(i)) return true; }
+    return false;
+  };
+  if (cycleWith(true)) errors.push('graph contains a cycle with no delay node (rule 1)');
   // Basic arities
   const outputsSet = new Set(Array.isArray(g.outputs) ? g.outputs : []);
   for (let i=0;i<kinds.length;i++) {

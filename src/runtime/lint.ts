@@ -59,27 +59,39 @@ export function lintGraph(spec: GraphSpec): LintResult {
     }
   }
 
-  // DAG check via DFS
-  const adj = new Map<string, string[]>();
-  for (const n of spec.nodes) adj.set(n.id, []);
-  for (const c of spec.connections) (adj.get(c.from.node)!).push(c.to.node);
-  const temp = new Set<string>();
-  const perm = new Set<string>();
-  function visit(v: string): boolean {
-    if (perm.has(v)) return false; // no cycle starting here
-    if (temp.has(v)) return true; // found a back-edge
-    temp.add(v);
-    for (const w of adj.get(v) || []) {
-      if (visit(w)) return true;
+  // Cycle rule (KHR_audio_graph rule 1): cycles are permitted only when every
+  // cycle contains a delay node. Implementation: strip delay nodes and re-check —
+  // any cycle that survives contains no delay and is invalid.
+  const hasCycle = (excludeDelay: boolean): boolean => {
+    const adj = new Map<string, string[]>();
+    const skip = (id: string) => excludeDelay && spec.nodes.find((n) => n.id === id)?.kind === 'delay';
+    for (const n of spec.nodes) adj.set(n.id, []);
+    for (const c of spec.connections) {
+      if (skip(c.from.node) || skip(c.to.node)) continue;
+      (adj.get(c.from.node) || []).push(c.to.node);
     }
-    temp.delete(v);
-    perm.add(v);
+    const temp = new Set<string>();
+    const perm = new Set<string>();
+    const visit = (v: string): boolean => {
+      if (perm.has(v)) return false;
+      if (temp.has(v)) return true;
+      temp.add(v);
+      for (const w of adj.get(v) || []) {
+        if (visit(w)) return true;
+      }
+      temp.delete(v);
+      perm.add(v);
+      return false;
+    };
+    for (const n of spec.nodes) {
+      if (!perm.has(n.id) && visit(n.id)) return true;
+    }
     return false;
-  }
-  for (const n of spec.nodes) {
-    if (!perm.has(n.id)) {
-      if (visit(n.id)) { errors.push('Graph contains a cycle (must be a DAG)'); break; }
-    }
+  };
+  if (hasCycle(true)) {
+    errors.push('Graph contains a cycle with no delay node (rule 1: every cycle must contain a delay node)');
+  } else if (hasCycle(false)) {
+    warnings.push('Graph contains delay-stabilized feedback cycle(s) (permitted by rule 1)');
   }
 
   return { errors, warnings };
@@ -93,10 +105,14 @@ export function lintLayeredGraph(
   const warnings: string[] = [];
   const nodeCount = graph.nodes.length;
 
-  // Validate that no 'emitter' kind nodes exist in layered graphs
+  // Validate that no 'emitter' or 'oscillator' kind nodes exist in layered
+  // graphs (r2: oscillators are KHR_audio_emitter source data, not node kinds)
   for (let i = 0; i < nodeCount; i++) {
     if (graph.nodes[i].kind === 'emitter') {
       errors.push(`Layered graph must not contain "emitter" kind nodes (found at index ${i})`);
+    }
+    if (graph.nodes[i].kind === 'oscillator') {
+      errors.push(`"oscillator" is not a graph node kind (found at index ${i}); declare it as source data via source.extensions.KHR_audio_graph.oscillator`);
     }
   }
 
@@ -134,31 +150,38 @@ export function lintLayeredGraph(
     }
   }
 
-  // Build adjacency and check for cycles (DAG)
-  const adj = new Map<number, number[]>();
-  for (let i = 0; i < nodeCount; i++) adj.set(i, []);
-  for (const c of graph.connections) {
-    if (c.from.node >= 0 && c.from.node < nodeCount) {
+  // Cycle rule (rule 1): only delay-free cycles are invalid.
+  const hasCycle = (excludeDelay: boolean): boolean => {
+    const skip = (i: number) => excludeDelay && graph.nodes[i]?.kind === 'delay';
+    const adj = new Map<number, number[]>();
+    for (let i = 0; i < nodeCount; i++) adj.set(i, []);
+    for (const c of graph.connections) {
+      if (c.from.node < 0 || c.from.node >= nodeCount || c.to.node < 0 || c.to.node >= nodeCount) continue;
+      if (skip(c.from.node) || skip(c.to.node)) continue;
       adj.get(c.from.node)!.push(c.to.node);
     }
-  }
-  const temp = new Set<number>();
-  const perm = new Set<number>();
-  function visit(v: number): boolean {
-    if (perm.has(v)) return false;
-    if (temp.has(v)) return true;
-    temp.add(v);
-    for (const w of adj.get(v) || []) {
-      if (visit(w)) return true;
+    const temp = new Set<number>();
+    const perm = new Set<number>();
+    const visit = (v: number): boolean => {
+      if (perm.has(v)) return false;
+      if (temp.has(v)) return true;
+      temp.add(v);
+      for (const w of adj.get(v) || []) {
+        if (visit(w)) return true;
+      }
+      temp.delete(v);
+      perm.add(v);
+      return false;
+    };
+    for (let i = 0; i < nodeCount; i++) {
+      if (!perm.has(i) && visit(i)) return true;
     }
-    temp.delete(v);
-    perm.add(v);
     return false;
-  }
-  for (let i = 0; i < nodeCount; i++) {
-    if (!perm.has(i)) {
-      if (visit(i)) { errors.push('Graph contains a cycle (must be a DAG)'); break; }
-    }
+  };
+  if (hasCycle(true)) {
+    errors.push('Graph contains a cycle with no delay node (rule 1: every cycle must contain a delay node)');
+  } else if (hasCycle(false)) {
+    warnings.push('Graph contains delay-stabilized feedback cycle(s) (permitted by rule 1)');
   }
 
   // Must have at least one sink (output binding or implicit)

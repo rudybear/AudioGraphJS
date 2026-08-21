@@ -12,9 +12,16 @@ function validateAudioEmitter(ext) {
   if (!Array.isArray(ext.emitters)) errors.push('KHR_audio_emitter.emitters must be an array');
 
   for (const [i, src] of (ext.sources || []).entries()) {
-    if (typeof src.audio !== 'number' || src.audio < 0 || src.audio >= (ext.audio || []).length) {
-      errors.push(`source[${i}].audio references invalid audio index ${src.audio}`);
+    const osc = src.extensions?.KHR_audio_graph?.oscillator;
+    if (typeof src.audio === 'number') {
+      if (src.audio < 0 || src.audio >= (ext.audio || []).length) {
+        errors.push(`source[${i}].audio references invalid audio index ${src.audio}`);
+      }
+      if (osc) {
+        errors.push(`source[${i}]: must not declare both audio and oscillator`);
+      }
     }
+    // No audio and no oscillator = base-spec placeholder source (allowed).
   }
 
   for (const [i, em] of (ext.emitters || []).entries()) {
@@ -34,7 +41,7 @@ function validateAudioEmitter(ext) {
 }
 
 const VALID_KINDS = new Set([
-  'oscillator', 'gain', 'delay', 'waveshaper',
+  'gain', 'delay', 'waveshaper',
   'lowpass', 'highpass', 'bandpass', 'lowshelf', 'highshelf', 'peaking', 'notch', 'allpass',
   'splitter', 'channelmerger', 'channelmixer', 'audiomixer',
 ]);
@@ -53,6 +60,9 @@ function validateGraph(g, audioEmitter, graphIdx) {
     }
     if (n.kind === 'emitter') {
       errors.push(`graph[${graphIdx}].nodes[${i}]: "emitter" kind is not allowed in layered graphs`);
+    }
+    if (n.kind === 'oscillator') {
+      errors.push(`graph[${graphIdx}].nodes[${i}]: "oscillator" is not a graph node kind (r2); declare it as source data via source.extensions.KHR_audio_graph.oscillator`);
     }
   }
 
@@ -102,8 +112,30 @@ function validateGraph(g, audioEmitter, graphIdx) {
     perm.add(v);
     return false;
   }
-  for (let i = 0; i < nodeCount; i++) {
-    if (!perm.has(i) && visit(i)) { errors.push(`graph[${graphIdx}]: contains a cycle (must be DAG)`); break; }
+  const cycleWith = (excludeDelay) => {
+    const adj2 = new Map();
+    for (let i = 0; i < nodeCount; i++) adj2.set(i, []);
+    for (const c of g.connections || []) {
+      const f = c.from.node, to = c.to.node;
+      if (f < 0 || f >= nodeCount || to < 0 || to >= nodeCount) continue;
+      if (excludeDelay && (g.nodes[f]?.kind === 'delay' || g.nodes[to]?.kind === 'delay')) continue;
+      adj2.get(f).push(to);
+    }
+    const tmp = new Set(), done = new Set();
+    const go = (v) => {
+      if (done.has(v)) return false;
+      if (tmp.has(v)) return true;
+      tmp.add(v);
+      for (const w of adj2.get(v) || []) { if (go(w)) return true; }
+      tmp.delete(v); done.add(v);
+      return false;
+    };
+    for (let i = 0; i < nodeCount; i++) { if (!done.has(i) && go(i)) return true; }
+    return false;
+  };
+  // Rule 1 (r2): cycles are permitted only when every cycle contains a delay node.
+  if (cycleWith(true)) {
+    errors.push(`graph[${graphIdx}]: contains a cycle with no delay node (rule 1)`);
   }
 
   return errors;
